@@ -1,0 +1,6 @@
+{
+  "name": "Wow Burger Digital Menu",
+  "description": "A premium, fully responsive digital menu for Wow Burger featuring interactive category navigation, filterable ingredients, detailed single-item pages, and rich culinary visuals.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
