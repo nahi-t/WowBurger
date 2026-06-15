@@ -1,20 +1,40 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Wow Burger Frontend
 
-# Run and deploy your AI Studio app
+This is the React + Vite frontend for the Wow Burger menu and admin dashboard.
 
-This contains everything you need to run your app locally.
+## Project setup
 
-View your app in AI Studio: https://ai.studio/apps/0bd82039-0136-4a44-b766-e41cd220d008
+```bash
+cd frontend
+npm install
+```
 
-## Run Locally
+## Development
 
-**Prerequisites:**  Node.js
+```bash
+npm run dev
+```
 
+Open your browser at the address shown in the terminal (default `http://localhost:3000`).
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Production build
+
+```bash
+npm run build
+```
+
+## Preview production build
+
+```bash
+npm run preview
+```
+
+## Notes
+
+- Admin panel is accessible from the header by clicking the shield icon.
+- This project uses React 19, TypeScript, Vite, Tailwind CSS, and lucide-react icons.
+- If you see any React type warnings, install the types:
+
+```bash
+npm install --save-dev @types/react @types/react-dom
+```
