@@ -11,13 +11,15 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Category = void 0;
 const typeorm_1 = require("typeorm");
-const _menu_item_entity_1 = require("../menu-items/ menu-item.entity");
+const menu_item_entity_1 = require("../menu-items/menu-item.entity");
 let Category = class Category {
     id;
     name;
     slug;
     displayOrder;
     isActive;
+    description;
+    iconName;
     menuItems;
     createdAt;
 };
@@ -43,7 +45,15 @@ __decorate([
     __metadata("design:type", Boolean)
 ], Category.prototype, "isActive", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => _menu_item_entity_1.MenuItem, (menuItem) => menuItem.category),
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], Category.prototype, "description", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'icon_name', length: 100, nullable: true }),
+    __metadata("design:type", String)
+], Category.prototype, "iconName", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => menu_item_entity_1.MenuItem, (menuItem) => menuItem.category),
     __metadata("design:type", Array)
 ], Category.prototype, "menuItems", void 0);
 __decorate([

@@ -23,6 +23,15 @@ let MenuItem = class MenuItem {
     description;
     imageUrl;
     isAvailable;
+    price;
+    ingredients;
+    detailedIngredients;
+    calories;
+    dietaryTags;
+    rating;
+    reviewsCount;
+    nutrition;
+    customizableOptions;
     variants;
     createdAt;
 };
@@ -49,11 +58,11 @@ __decorate([
     __metadata("design:type", String)
 ], MenuItem.prototype, "slug", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'short_description', length: 255 }),
+    (0, typeorm_1.Column)({ name: 'short_description', length: 255, nullable: true }),
     __metadata("design:type", String)
 ], MenuItem.prototype, "shortDescription", void 0);
 __decorate([
-    (0, typeorm_1.Column)('text'),
+    (0, typeorm_1.Column)('text', { nullable: true }),
     __metadata("design:type", String)
 ], MenuItem.prototype, "description", void 0);
 __decorate([
@@ -65,6 +74,42 @@ __decorate([
     __metadata("design:type", Boolean)
 ], MenuItem.prototype, "isAvailable", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 50, default: 'Br 0' }),
+    __metadata("design:type", String)
+], MenuItem.prototype, "price", void 0);
+__decorate([
+    (0, typeorm_1.Column)('jsonb', { default: [] }),
+    __metadata("design:type", Array)
+], MenuItem.prototype, "ingredients", void 0);
+__decorate([
+    (0, typeorm_1.Column)('jsonb', { name: 'detailed_ingredients', default: [] }),
+    __metadata("design:type", Array)
+], MenuItem.prototype, "detailedIngredients", void 0);
+__decorate([
+    (0, typeorm_1.Column)('integer', { default: 0 }),
+    __metadata("design:type", Number)
+], MenuItem.prototype, "calories", void 0);
+__decorate([
+    (0, typeorm_1.Column)('jsonb', { name: 'dietary_tags', default: [] }),
+    __metadata("design:type", Array)
+], MenuItem.prototype, "dietaryTags", void 0);
+__decorate([
+    (0, typeorm_1.Column)('numeric', { precision: 2, scale: 1, default: 5.0 }),
+    __metadata("design:type", Number)
+], MenuItem.prototype, "rating", void 0);
+__decorate([
+    (0, typeorm_1.Column)('integer', { name: 'reviews_count', default: 0 }),
+    __metadata("design:type", Number)
+], MenuItem.prototype, "reviewsCount", void 0);
+__decorate([
+    (0, typeorm_1.Column)('jsonb', { nullable: true }),
+    __metadata("design:type", Object)
+], MenuItem.prototype, "nutrition", void 0);
+__decorate([
+    (0, typeorm_1.Column)('jsonb', { name: 'customizable_options', default: [] }),
+    __metadata("design:type", Array)
+], MenuItem.prototype, "customizableOptions", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => item_variant_entity_1.ItemVariant, (variant) => variant.menuItem, { cascade: true }),
     __metadata("design:type", Array)
 ], MenuItem.prototype, "variants", void 0);
@@ -75,4 +120,4 @@ __decorate([
 exports.MenuItem = MenuItem = __decorate([
     (0, typeorm_1.Entity)('menu_items')
 ], MenuItem);
-//# sourceMappingURL=%20menu-item.entity.js.map
+//# sourceMappingURL=menu-item.entity.js.map

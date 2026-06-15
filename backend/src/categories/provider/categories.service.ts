@@ -30,4 +30,16 @@ export class CategoriesService {
       throw new NotFoundException(`Category with ID "${id}" not found`);
     }
   }
+
+  // 4. Update a category
+  async update(id: string, categoryData: Partial<Category>): Promise<Category> {
+    const category = await this.categoryRepository.preload({
+      id,
+      ...categoryData,
+    });
+    if (!category) {
+      throw new NotFoundException(`Category with ID "${id}" not found`);
+    }
+    return await this.categoryRepository.save(category);
+  }
 }

@@ -10,6 +10,23 @@ export declare class MenuItem {
     description: string;
     imageUrl: string;
     isAvailable: boolean;
+    price: string;
+    ingredients: string[];
+    detailedIngredients: any[];
+    calories: number;
+    dietaryTags: string[];
+    rating: number;
+    reviewsCount: number;
+    nutrition: {
+        protein: string;
+        carbs: string;
+        fat: string;
+        sodium?: string;
+    };
+    customizableOptions: {
+        name: string;
+        options: string[];
+    }[];
     variants: ItemVariant[];
     createdAt: Date;
 }

@@ -16,7 +16,7 @@ exports.CategoriesController = void 0;
 const common_1 = require("@nestjs/common");
 const categories_service_1 = require("../categories/provider/categories.service");
 const roles_guard_1 = require("../auth/roles.guard");
-const _roles_decorator_1 = require("../auth/ roles.decorator");
+const roles_decorator_1 = require("../auth/roles.decorator");
 const user_entity_1 = require("../user/user.entity");
 const passport_1 = require("@nestjs/passport");
 let CategoriesController = class CategoriesController {
@@ -33,6 +33,9 @@ let CategoriesController = class CategoriesController {
     remove(id) {
         return this.categoriesService.remove(id);
     }
+    update(id, categoryData) {
+        return this.categoriesService.update(id, categoryData);
+    }
 };
 exports.CategoriesController = CategoriesController;
 __decorate([
@@ -44,7 +47,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
-    (0, _roles_decorator_1.Roles)(user_entity_1.UserRole.ADMIN),
+    (0, roles_decorator_1.Roles)(user_entity_1.UserRole.ADMIN),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -53,12 +56,22 @@ __decorate([
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
-    (0, _roles_decorator_1.Roles)(user_entity_1.UserRole.ADMIN),
+    (0, roles_decorator_1.Roles)(user_entity_1.UserRole.ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], CategoriesController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Put)(':id'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(user_entity_1.UserRole.ADMIN),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], CategoriesController.prototype, "update", null);
 exports.CategoriesController = CategoriesController = __decorate([
     (0, common_1.Controller)('categories'),
     __metadata("design:paramtypes", [categories_service_1.CategoriesService])

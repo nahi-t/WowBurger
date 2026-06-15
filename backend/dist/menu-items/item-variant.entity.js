@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ItemVariant = void 0;
 const typeorm_1 = require("typeorm");
-const _menu_item_entity_1 = require("./ menu-item.entity");
+const menu_item_entity_1 = require("./menu-item.entity");
 let ItemVariant = class ItemVariant {
     id;
     menuItemId;
@@ -30,9 +30,9 @@ __decorate([
     __metadata("design:type", String)
 ], ItemVariant.prototype, "menuItemId", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => _menu_item_entity_1.MenuItem, (menuItem) => menuItem.variants, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.ManyToOne)(() => menu_item_entity_1.MenuItem, (menuItem) => menuItem.variants, { onDelete: 'CASCADE' }),
     (0, typeorm_1.JoinColumn)({ name: 'menu_item_id' }),
-    __metadata("design:type", _menu_item_entity_1.MenuItem)
+    __metadata("design:type", menu_item_entity_1.MenuItem)
 ], ItemVariant.prototype, "menuItem", void 0);
 __decorate([
     (0, typeorm_1.Column)({ length: 100 }),

@@ -11,7 +11,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const menu_items_controller_1 = require("./menu-items.controller");
 const menu_items_service_1 = require("./provider/menu-items.service");
-const _menu_item_entity_1 = require("../menu-items/ menu-item.entity");
+const menu_item_entity_1 = require("../menu-items/menu-item.entity");
 const item_variant_entity_1 = require("./item-variant.entity");
 let MenuItemsModule = class MenuItemsModule {
 };
@@ -19,7 +19,7 @@ exports.MenuItemsModule = MenuItemsModule;
 exports.MenuItemsModule = MenuItemsModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([_menu_item_entity_1.MenuItem, item_variant_entity_1.ItemVariant]),
+            typeorm_1.TypeOrmModule.forFeature([menu_item_entity_1.MenuItem, item_variant_entity_1.ItemVariant]),
         ],
         controllers: [menu_items_controller_1.MenuItemsController],
         providers: [menu_items_service_1.MenuItemsService],

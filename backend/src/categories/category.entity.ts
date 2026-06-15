@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn } from 'typeorm';
-import { MenuItem } from '../menu-items/ menu-item.entity';
+import { MenuItem } from '../menu-items/menu-item.entity';
 
 @Entity('categories')
 export class Category {
@@ -17,6 +17,12 @@ export class Category {
 
   @Column({ name: 'is_active', default: true })
   isActive!: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  description?: string;
+
+  @Column({ name: 'icon_name', length: 100, nullable: true })
+  iconName?: string;
 
   @OneToMany(() => MenuItem, (menuItem) => menuItem.category)
   menuItems!: MenuItem[];

@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { MenuItem } from './ menu-item.entity';
+import { MenuItem } from './menu-item.entity';
 
 @Entity('item_variants')
 export class ItemVariant {

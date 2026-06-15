@@ -1,5 +1,4 @@
-import React from 'react';
-import { Search, MapPin, Clock, Flame, Sparkles } from 'lucide-react';
+import { Search, MapPin, Clock, Flame, Sparkles, Shield } from 'lucide-react';
 
 interface HeaderProps {
   searchQuery: string;
@@ -7,6 +6,7 @@ interface HeaderProps {
   favoritesCount: number;
   onViewFavorites: () => void;
   showFavoritesOnly: boolean;
+  onAdminClick: () => void;
 }
 
 export default function Header({
@@ -15,6 +15,7 @@ export default function Header({
   favoritesCount,
   onViewFavorites,
   showFavoritesOnly,
+  onAdminClick,
 }: HeaderProps) {
   // Let's check if the restaurant is current open (based on local hours: open 10:00 AM to 11:00 PM)
   const isCurrentlyOpen = () => {
@@ -67,7 +68,7 @@ export default function Header({
           </div>
           <div className="text-left">
             <h1 className="text-2xl font-black tracking-tightest leading-none text-stone-50" id="brand-logo-title">
-              WOW<span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-amber-500 font-extrabold">BURGER</span>
+              WOW<span className="text-transparent bg-clip-text bg-linear-to-r from-red-500 to-amber-500 font-extrabold">BURGER</span>
             </h1>
             <p className="text-[10px] font-mono text-stone-400 font-bold uppercase tracking-widest mt-0.5 sm:block hidden">
               Ethiopia’s Premier Craft Burgers
@@ -109,11 +110,20 @@ export default function Header({
             <Sparkles size={12} className={showFavoritesOnly ? 'fill-white' : 'text-amber-500'} />
             <span>Favs ({favoritesCount})</span>
           </button>
+
+          <button
+            onClick={onAdminClick}
+            className="p-2 rounded-lg bg-stone-800/80 hover:bg-stone-800 border border-stone-800 text-stone-300 hover:text-white transition-colors cursor-pointer flex items-center justify-center shrink-0"
+            title="Admin Dashboard"
+            id="admin-console-btn"
+          >
+            <Shield size={14} className="text-red-500" />
+          </button>
         </div>
       </div>
 
       {/* Bottom thin accent bar */}
-      <div className="h-0.5 bg-gradient-to-r from-red-600 via-amber-500 to-red-600" />
+      <div className="h-0.5 bg-linear-to-r from-red-600 via-amber-500 to-red-600" />
     </header>
   );
 }

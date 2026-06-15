@@ -36,18 +36,18 @@ export default function CategoryNav({
         <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth pb-1 -mx-4 px-4 sm:mx-0 sm:px-0" id="category-scroller">
           {categories.map((cat) => {
             const IconComponent = IconMap[cat.iconName] || Sparkles;
-            const isActive = cat.id === activeCategoryId;
+            const isActive = cat.id === activeCategoryId || (cat as any).slug === activeCategoryId;
 
             return (
               <button
                 key={cat.id}
-                onClick={() => onSelectCategory(cat.id)}
+                onClick={() => onSelectCategory((cat as any).slug || cat.id)}
                 className={`group flex items-center gap-3 px-5 py-3.5 rounded-2xl border text-sm font-semibold transition-all duration-300 whitespace-nowrap scroll-ml-6 ${
                   isActive
                     ? 'bg-red-600 border-red-600 text-stone-50 shadow-md shadow-red-900/10 scale-102'
                     : 'bg-white border-stone-200 text-stone-750 hover:bg-stone-100 hover:border-stone-300'
                 }`}
-                id={`cat-pill-${cat.id}`}
+                id={`cat-pill-${(cat as any).slug || cat.id}`}
               >
                 <div
                   className={`p-1.5 rounded-lg transition-colors duration-300 ${
@@ -60,7 +60,7 @@ export default function CategoryNav({
                 <div className="flex flex-col items-start gap-0.5">
                   <span className="font-bold tracking-tight">{cat.name}</span>
                   <span className={`text-[10px] font-normal leading-none ${isActive ? 'text-stone-300' : 'text-stone-400 group-hover:text-stone-500'}`}>
-                    {cat.id === 'burgers' ? 'Fire-grilled' : cat.id === 'sides' ? 'Crispy fry' : cat.id === 'drinks' ? 'Hand-spun' : 'Baked warm'}
+                    {(cat.id === 'burgers' || (cat as any).slug === 'burgers') ? 'Fire-grilled' : (cat.id === 'sides' || (cat as any).slug === 'sides') ? 'Crispy fry' : (cat.id === 'drinks' || (cat as any).slug === 'drinks') ? 'Hand-spun' : 'Baked warm'}
                   </span>
                 </div>
               </button>

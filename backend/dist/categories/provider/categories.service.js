@@ -35,6 +35,16 @@ let CategoriesService = class CategoriesService {
             throw new common_1.NotFoundException(`Category with ID "${id}" not found`);
         }
     }
+    async update(id, categoryData) {
+        const category = await this.categoryRepository.preload({
+            id,
+            ...categoryData,
+        });
+        if (!category) {
+            throw new common_1.NotFoundException(`Category with ID "${id}" not found`);
+        }
+        return await this.categoryRepository.save(category);
+    }
 };
 exports.CategoriesService = CategoriesService;
 exports.CategoriesService = CategoriesService = __decorate([

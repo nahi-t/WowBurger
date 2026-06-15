@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt'; // Added this
 import { ConfigModule, ConfigService } from '@nestjs/config'; // Added this
 import { AuthController } from './auth.controller';
 import { AuthService } from './provider/auth.service';
+import { JwtStrategy } from './jwt.strategy';
 import { UserModule } from '../user/user.module'; // Adjust this path to match your UserModule file location
 
 @Module({
@@ -20,7 +21,7 @@ import { UserModule } from '../user/user.module'; // Adjust this path to match y
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy],
   exports: [AuthService], // Exported in case you need to guard other controllers outside of AuthModule
 })
 export class AuthModule {}

@@ -6,4 +6,5 @@ export declare class CategoriesService {
     findAll(): Promise<Category[]>;
     create(categoryData: Partial<Category>): Promise<Category>;
     remove(id: string): Promise<void>;
+    update(id: string, categoryData: Partial<Category>): Promise<Category>;
 }

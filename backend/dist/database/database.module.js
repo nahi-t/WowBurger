@@ -12,7 +12,7 @@ const config_1 = require("@nestjs/config");
 const typeorm_1 = require("@nestjs/typeorm");
 const user_entity_1 = require("../user/user.entity");
 const category_entity_1 = require("../categories/category.entity");
-const _menu_item_entity_1 = require("../menu-items/ menu-item.entity");
+const menu_item_entity_1 = require("../menu-items/menu-item.entity");
 const item_variant_entity_1 = require("../menu-items/item-variant.entity");
 let DatabaseModule = class DatabaseModule {
 };
@@ -31,7 +31,7 @@ exports.DatabaseModule = DatabaseModule = __decorate([
                     username: cs.get('POSTGRES_USER') || 'postgres',
                     password: String(cs.get('POSTGRES_PASSWORD') || ''),
                     database: cs.get('POSTGRES_DB') || 'wow_burger_db',
-                    entities: [user_entity_1.User, category_entity_1.Category, _menu_item_entity_1.MenuItem, item_variant_entity_1.ItemVariant],
+                    entities: [user_entity_1.User, category_entity_1.Category, menu_item_entity_1.MenuItem, item_variant_entity_1.ItemVariant],
                     synchronize: true,
                     logging: cs.get('TYPEORM_LOGGING') === 'true',
                 }),

@@ -1,4 +1,4 @@
-import { MenuItem } from './ menu-item.entity';
+import { MenuItem } from './menu-item.entity';
 export declare class ItemVariant {
     id: string;
     menuItemId: string;

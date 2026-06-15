@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../user/user.entity'; 
 import { Category } from '../categories/category.entity';
-import { MenuItem } from '../menu-items/ menu-item.entity';
+import { MenuItem } from '../menu-items/menu-item.entity';
 import { ItemVariant } from '../menu-items/item-variant.entity'; // 1. Import your Variant entity here! (Adjust path if needed)
 
 @Module({

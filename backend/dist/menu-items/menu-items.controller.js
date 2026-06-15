@@ -16,7 +16,7 @@ exports.MenuItemsController = void 0;
 const common_1 = require("@nestjs/common");
 const menu_items_service_1 = require("../menu-items/provider/menu-items.service");
 const roles_guard_1 = require("../auth/roles.guard");
-const _roles_decorator_1 = require("../auth/ roles.decorator");
+const roles_decorator_1 = require("../auth/roles.decorator");
 const user_entity_1 = require("../user/user.entity");
 const passport_1 = require("@nestjs/passport");
 let MenuItemsController = class MenuItemsController {
@@ -24,14 +24,37 @@ let MenuItemsController = class MenuItemsController {
     constructor(menuItemsService) {
         this.menuItemsService = menuItemsService;
     }
-    findAll() {
-        return this.menuItemsService.findAll();
+    async findAll() {
+        const items = await this.menuItemsService.findAll();
+        return items.map(item => ({
+            id: item.id,
+            name: item.name,
+            slug: item.slug,
+            category: item.category ? item.category.slug : item.categoryId,
+            price: item.price,
+            description: item.description,
+            shortDescription: item.shortDescription,
+            ingredients: item.ingredients || [],
+            detailedIngredients: item.detailedIngredients || [],
+            calories: item.calories || 0,
+            dietaryTags: item.dietaryTags || [],
+            image: item.imageUrl || '',
+            rating: Number(item.rating || 5.0),
+            reviewsCount: item.reviewsCount || 0,
+            nutrition: item.nutrition || { protein: '0g', carbs: '0g', fat: '0g' },
+            customizableOptions: item.customizableOptions || [],
+            isAvailable: item.isAvailable,
+            categoryId: item.categoryId,
+        }));
     }
     create(itemData) {
         return this.menuItemsService.create(itemData);
     }
     remove(id) {
         return this.menuItemsService.remove(id);
+    }
+    update(id, itemData) {
+        return this.menuItemsService.update(id, itemData);
     }
 };
 exports.MenuItemsController = MenuItemsController;
@@ -44,7 +67,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
-    (0, _roles_decorator_1.Roles)(user_entity_1.UserRole.ADMIN),
+    (0, roles_decorator_1.Roles)(user_entity_1.UserRole.ADMIN),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -53,12 +76,22 @@ __decorate([
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
-    (0, _roles_decorator_1.Roles)(user_entity_1.UserRole.ADMIN),
+    (0, roles_decorator_1.Roles)(user_entity_1.UserRole.ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], MenuItemsController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Put)(':id'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(user_entity_1.UserRole.ADMIN),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MenuItemsController.prototype, "update", null);
 exports.MenuItemsController = MenuItemsController = __decorate([
     (0, common_1.Controller)('menu-items'),
     __metadata("design:paramtypes", [menu_items_service_1.MenuItemsService])

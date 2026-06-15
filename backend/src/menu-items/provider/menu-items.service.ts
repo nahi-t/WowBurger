@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MenuItem } from '../ menu-item.entity'; // Fixed the spacing in the path
+import { MenuItem } from '../menu-item.entity';
 
 @Injectable()
 export class MenuItemsService {
@@ -10,13 +10,13 @@ export class MenuItemsService {
     private readonly menuItemRepository: Repository<MenuItem>,
   ) {}
 
-  // 1. Find all available menu items with their variants
+  // 1. Find all available menu items with their variants and category
   findAll(): Promise<MenuItem[]> {
     return this.menuItemRepository.find({
       relations: {
-        variants: true, // Fixed: Using object syntax instead of ['variants']
+        category: true,
+        variants: true,
       },
-      where: { isAvailable: true },
     });
   }
 
@@ -34,5 +34,17 @@ export class MenuItemsService {
     if (result.affected === 0) {
       throw new NotFoundException(`Menu item with ID "${id}" not found`);
     }
+  }
+
+  // 4. Update a menu item
+  async update(id: string, itemData: Partial<MenuItem>): Promise<MenuItem> {
+    const item = await this.menuItemRepository.preload({
+      id,
+      ...itemData,
+    });
+    if (!item) {
+      throw new NotFoundException(`Menu item with ID "${id}" not found`);
+    }
+    return await this.menuItemRepository.save(item);
   }
 }

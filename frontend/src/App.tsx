@@ -4,11 +4,18 @@ import CategoryNav from './components/CategoryNav';
 import FilterBar from './components/FilterBar';
 import MenuCard from './components/MenuCard';
 import ItemDetail from './components/ItemDetail';
+import AdminPanel from './components/AdminPanel';
+import { getCategories, getMenuItems } from './services/api';
 import { MENU_CATEGORIES, MENU_ITEMS } from './data';
-import { MenuItem, DietaryType } from './types';
+import { MenuItem, MenuCategory, DietaryType } from './types';
 import { Flame, Star, Sparkles, Check, Heart, X, ChevronRight, RefreshCw, Smile } from 'lucide-react';
 
 export default function App() {
+  const [categories, setCategories] = useState<MenuCategory[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
+
   const [activeCategoryId, setActiveCategoryId] = useState<string>('burgers');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedDietary, setSelectedDietary] = useState<DietaryType[]>([]);
@@ -30,6 +37,33 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('wow_burger_favorites', JSON.stringify(favorites));
   }, [favorites]);
+
+  const refreshData = async () => {
+    try {
+      const apiCats = await getCategories();
+      const apiItems = await getMenuItems();
+      if (apiCats && apiCats.length > 0) {
+        setCategories(apiCats);
+      } else {
+        setCategories(MENU_CATEGORIES);
+      }
+      if (apiItems && apiItems.length > 0) {
+        setMenuItems(apiItems);
+      } else {
+        setMenuItems(MENU_ITEMS);
+      }
+    } catch (err) {
+      console.warn("Failed to load real API data. Falling back to mock data.", err);
+      setCategories(MENU_CATEGORIES);
+      setMenuItems(MENU_ITEMS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshData();
+  }, []);
 
   const handleToggleFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Avoid triggering card modal
@@ -66,7 +100,7 @@ export default function App() {
   };
 
   // Filter computations
-  const filteredItems = MENU_ITEMS.filter((item) => {
+  const filteredItems = menuItems.filter((item) => {
     // 1. Search Query selection
     if (searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase();
@@ -82,7 +116,8 @@ export default function App() {
     }
 
     // 3. Category match (only if favorites are not selected, or within favorites filter by category)
-    if (item.category !== activeCategoryId) {
+    const categoryMatches = item.category === activeCategoryId;
+    if (!categoryMatches) {
       return false;
     }
 
@@ -105,8 +140,9 @@ export default function App() {
       [DietaryType.SIGNATURE]: 0,
     };
 
-    MENU_ITEMS.forEach((item) => {
-      if (item.category === activeCategoryId) {
+    menuItems.forEach((item) => {
+      const categoryMatches = item.category === activeCategoryId;
+      if (categoryMatches) {
         item.dietaryTags.forEach((tag) => {
           counts[tag] = (counts[tag] || 0) + 1;
         });
@@ -117,7 +153,25 @@ export default function App() {
   };
 
   const currentCategoryGourmetCount = getGlobalDietaryCounts();
-  const activeCategoryDetail = MENU_CATEGORIES.find((cat) => cat.id === activeCategoryId);
+  const activeCategoryDetail = categories.find((cat) => cat.id === activeCategoryId || (cat as any).slug === activeCategoryId);
+
+  if (loading && categories.length === 0) {
+    return (
+      <div className="min-h-screen bg-stone-900 text-stone-100 flex flex-col justify-center items-center p-4">
+        <RefreshCw className="animate-spin text-red-650 mb-4" size={32} />
+        <p className="text-xs font-mono uppercase tracking-widest text-stone-400">Loading WowBurger digital menu...</p>
+      </div>
+    );
+  }
+
+  if (showAdminPanel) {
+    return (
+      <AdminPanel 
+        onBack={() => setShowAdminPanel(false)} 
+        onRefreshData={refreshData} 
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 selection:bg-red-500 selection:text-white" id="app-root-container">
@@ -137,11 +191,12 @@ export default function App() {
             favoritesCount={favorites.length}
             onViewFavorites={() => setShowFavoritesOnly(!showFavoritesOnly)}
             showFavoritesOnly={showFavoritesOnly}
+            onAdminClick={() => setShowAdminPanel(true)}
           />
 
           {/* Interactive Category Swipe Carousel */}
           <CategoryNav
-            categories={MENU_CATEGORIES}
+            categories={categories}
             activeCategoryId={activeCategoryId}
             onSelectCategory={handleSelectCategory}
           />

@@ -16,7 +16,7 @@ exports.MenuItemsService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
-const _menu_item_entity_1 = require("../ menu-item.entity");
+const menu_item_entity_1 = require("../menu-item.entity");
 let MenuItemsService = class MenuItemsService {
     menuItemRepository;
     constructor(menuItemRepository) {
@@ -25,9 +25,9 @@ let MenuItemsService = class MenuItemsService {
     findAll() {
         return this.menuItemRepository.find({
             relations: {
+                category: true,
                 variants: true,
             },
-            where: { isAvailable: true },
         });
     }
     create(itemData) {
@@ -40,11 +40,21 @@ let MenuItemsService = class MenuItemsService {
             throw new common_1.NotFoundException(`Menu item with ID "${id}" not found`);
         }
     }
+    async update(id, itemData) {
+        const item = await this.menuItemRepository.preload({
+            id,
+            ...itemData,
+        });
+        if (!item) {
+            throw new common_1.NotFoundException(`Menu item with ID "${id}" not found`);
+        }
+        return await this.menuItemRepository.save(item);
+    }
 };
 exports.MenuItemsService = MenuItemsService;
 exports.MenuItemsService = MenuItemsService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(_menu_item_entity_1.MenuItem)),
+    __param(0, (0, typeorm_1.InjectRepository)(menu_item_entity_1.MenuItem)),
     __metadata("design:paramtypes", [typeorm_2.Repository])
 ], MenuItemsService);
 //# sourceMappingURL=menu-items.service.js.map
