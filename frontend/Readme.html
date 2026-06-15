@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wow Burger - Digital Menu Proposal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              cream: '#FAF6F0',
+              charcoal: '#1A1110',
+              red: '#D22B2B',
+              yellow: '#FFB30F',
+              accent: '#E97A34',
+              muted: '#716766',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @media print {
+      body {
+        background-color: #FFFFFF !important;
+        color: #1A1110 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+      .avoid-break {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#FCFAF7] text-brand-charcoal font-sans min-h-screen antialiased">
+
+  <!-- Print Instruction Banner (Hidden on print) -->
+  <div class="no-print bg-brand-charcoal text-white text-center py-3 px-4 flex justify-between items-center shadow-md">
+    <span class="text-xs md:text-sm">💡 Ready to export? Press <strong>Ctrl + P</strong> (Windows) or <strong>Cmd + P</strong> (Mac) and choose <strong>Save as PDF</strong>.</span>
+    <button onclick="window.print()" class="bg-brand-red hover:bg-red-700 text-white font-bold text-xs px-4 py-1.5 rounded transition-all">Print Now</button>
+  </div>
+
+  <div class="max-w-4xl mx-auto p-8 md:p-12 my-6 bg-white shadow-sm border border-brand-charcoal/5 rounded-3xl">
+    
+    <!-- HEADER / COVER -->
+    <header class="border-b-4 border-brand-red pb-8 mb-10 flex flex-col md:flex-row justify-between items-start md:items-end">
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-10 h-10 rounded-full bg-brand-red flex items-center justify-center text-white font-extrabold text-lg">W</div>
+          <span class="font-extrabold text-2xl tracking-tight text-brand-charcoal">WOW <span class="text-brand-red">BURGER</span></span>
+        </div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-brand-charcoal">MVP Technical & UI Proposal</h1>
+        <p class="text-brand-muted text-sm mt-1">Digital Menu Design System & Database Schema</p>
+      </div>
+      <div class="mt-4 md:mt-0 text-left md:text-right text-xs text-brand-muted">
+        <p><strong>Client:</strong> Wow Burger</p>
+        <p><strong>Industry:</strong> Food & Restaurant</p>
+        <p><strong>Date:</strong> June 2026</p>
+      </div>
+    </header>
+
+    <!-- SECTION 1: UI DESIGN SYSTEM -->
+    <section class="mb-12">
+      <h2 class="text-xl font-extrabold border-b border-brand-charcoal/10 pb-2 mb-4 text-brand-red">1. Brand Identity & UI Design System</h2>
+      <p class="text-sm text-brand-muted mb-6 leading-relaxed">
+        The user interface prioritizes a clean, mobile-responsive layout matching Wow Burger's visual brand strategy. Large visual touch targets make category switching immediate and comfortable for mobile devices.
+      </p>
+
+      <!-- Color Palette Showcase -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-[#FAF6F0] border border-brand-charcoal/10 p-4 rounded-xl">
+          <div class="w-full h-10 rounded bg-[#FAF6F0] border border-brand-charcoal/10 mb-2"></div>
+          <p class="text-xs font-bold text-brand-charcoal">Smashed Cream</p>
+          <p class="text-[10px] text-brand-muted">#FAF6F0 (Background)</p>
+        </div>
+        <div class="bg-white border border-brand-charcoal/10 p-4 rounded-xl">
+          <div class="w-full h-10 rounded bg-[#D22B2B] mb-2"></div>
+          <p class="text-xs font-bold text-brand-charcoal">Flame Red</p>
+          <p class="text-[10px] text-brand-muted">#D22B2B (Primary)</p>
+        </div>
+        <div class="bg-white border border-brand-charcoal/10 p-4 rounded-xl">
+          <div class="w-full h-10 rounded bg-[#FFB30F] mb-2"></div>
+          <p class="text-xs font-bold text-brand-charcoal">Cheddar Gold</p>
+          <p class="text-[10px] text-brand-muted">#FFB30F (Accents)</p>
+        </div>
+        <div class="bg-white border border-brand-charcoal/10 p-4 rounded-xl">
+          <div class="w-full h-10 rounded bg-[#1A1110] mb-2"></div>
+          <p class="text-xs font-bold text-brand-charcoal">Charcoal Smoke</p>
+          <p class="text-[10px] text-brand-muted">#1A1110 (Text)</p>
+        </div>
+      </div>
+
+      <div class="bg-brand-cream p-4 rounded-2xl border border-brand-charcoal/5">
+        <h3 class="text-sm font-bold text-brand-charcoal mb-2">Core Interface Architecture</h3>
+        <ul class="list-disc pl-5 text-xs text-brand-muted space-y-1.5 leading-relaxed">
+          <li><strong>Responsive Layout:</strong> Styled directly to map neatly to a mobile viewport, with fluid grid systems for tablet and desktop views.</li>
+          <li><strong>SPA Navigation:</strong> Interactive category capsules allow lightning-fast state transitions between "All Items", "Burgers", "Sides", and "Drinks" without visual page loads.</li>
+          <li><strong>Dedicated Detail View:</strong> Tapping an item replaces the list view with a detail layout carrying high-quality product images, comprehensive descriptions, and localized ingredient matrices.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SECTION 2: DATABASE SCHEMA -->
+    <section class="page-break mb-12">
+      <h2 class="text-xl font-extrabold border-b border-brand-charcoal/10 pb-2 mb-4 text-brand-red">2. Database Architecture (MVP Schema)</h2>
+      <p class="text-sm text-brand-muted mb-6 leading-relaxed">
+        The database schema is structured for transactional safety, quick relational indexing, and scaling. It handles category categorization, multiple pricing tiers per item (variants), and ingredient management out of the box.
+      </p>
+
+      <!-- DATA DICTIONARY -->
+      <div class="space-y-6">
+        
+        <!-- Table: categories -->
+        <div class="avoid-break bg-white p-4 rounded-2xl border border-brand-charcoal/5">
+          <h3 class="text-sm font-bold text-brand-charcoal mb-2 flex justify-between">
+            <span>Table: <code class="text-brand-red">categories</code></span>
+            <span class="text-xs font-normal text-brand-muted">Stores main menu classifications</span>
+          </h3>
+          <table class="w-full text-left text-xs text-brand-muted">
+            <thead>
+              <tr class="border-b border-brand-charcoal/10 text-brand-charcoal font-bold">
+                <th class="py-1">Column Name</th>
+                <th class="py-1">Type</th>
+                <th class="py-1">Constraints</th>
+                <th class="py-1">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">id</td><td class="py-1.5">UUID</td><td class="py-1.5">PRIMARY KEY</td><td class="py-1.5">Unique category identifier.</td></tr>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">name</td><td class="py-1.5">VARCHAR(100)</td><td class="py-1.5">NOT NULL</td><td class="py-1.5">Display name (e.g., "Burgers").</td></tr>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">slug</td><td class="py-1.5">VARCHAR(100)</td><td class="py-1.5">UNIQUE, NOT NULL</td><td class="py-1.5">URL-friendly slug (e.g., "burgers").</td></tr>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">display_order</td><td class="py-1.5">INT</td><td class="py-1.5">DEFAULT 0</td><td class="py-1.5">Controls tab sequence position.</td></tr>
+              <tr><td class="py-1.5 font-semibold text-brand-charcoal">is_active</td><td class="py-1.5">BOOLEAN</td><td class="py-1.5">DEFAULT TRUE</td><td class="py-1.5">Toggle status of the whole category.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table: menu_items -->
+        <div class="avoid-break bg-white p-4 rounded-2xl border border-brand-charcoal/5">
+          <h3 class="text-sm font-bold text-brand-charcoal mb-2 flex justify-between">
+            <span>Table: <code class="text-brand-red">menu_items</code></span>
+            <span class="text-xs font-normal text-brand-muted">Main menu catalog</span>
+          </h3>
+          <table class="w-full text-left text-xs text-brand-muted">
+            <thead>
+              <tr class="border-b border-brand-charcoal/10 text-brand-charcoal font-bold">
+                <th class="py-1">Column Name</th>
+                <th class="py-1">Type</th>
+                <th class="py-1">Constraints</th>
+                <th class="py-1">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">id</td><td class="py-1.5">UUID</td><td class="py-1.5">PRIMARY KEY</td><td class="py-1.5">Unique item identifier.</td></tr>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">category_id</td><td class="py-1.5">UUID</td><td class="py-1.5">REFERENCES categories(id)</td><td class="py-1.5">Associated category.</td></tr>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">name</td><td class="py-1.5">VARCHAR(150)</td><td class="py-1.5">NOT NULL</td><td class="py-1.5">Display name (e.g., "The Wow Signature").</td></tr>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">short_description</td><td class="py-1.5">VARCHAR(255)</td><td class="py-1.5">NOT NULL</td><td class="py-1.5">Brief taglines shown in preview grids.</td></tr>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">description</td><td class="py-1.5">TEXT</td><td class="py-1.5">NOT NULL</td><td class="py-1.5">Detailed description for item view.</td></tr>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">image_url</td><td class="py-1.5">VARCHAR(512)</td><td class="py-1.5">NULL</td><td class="py-1.5">Dynamic hosting image link.</td></tr>
+              <tr><td class="py-1.5 font-semibold text-brand-charcoal">is_available</td><td class="py-1.5">BOOLEAN</td><td class="py-1.5">DEFAULT TRUE</td><td class="py-1.5">Shows/hides item based on daily stock.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table: item_variants -->
+        <div class="avoid-break bg-white p-4 rounded-2xl border border-brand-charcoal/5">
+          <h3 class="text-sm font-bold text-brand-charcoal mb-2 flex justify-between">
+            <span>Table: <code class="text-brand-red">item_variants</code></span>
+            <span class="text-xs font-normal text-brand-muted">Handles flexible, multi-tier pricing structures</span>
+          </h3>
+          <table class="w-full text-left text-xs text-brand-muted">
+            <thead>
+              <tr class="border-b border-brand-charcoal/10 text-brand-charcoal font-bold">
+                <th class="py-1">Column Name</th>
+                <th class="py-1">Type</th>
+                <th class="py-1">Constraints</th>
+                <th class="py-1">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">id</td><td class="py-1.5">UUID</td><td class="py-1.5">PRIMARY KEY</td><td class="py-1.5">Unique variant identifier.</td></tr>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">menu_item_id</td><td class="py-1.5">UUID</td><td class="py-1.5">REFERENCES menu_items(id)</td><td class="py-1.5">Associated base menu item.</td></tr>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">name</td><td class="py-1.5">VARCHAR(100)</td><td class="py-1.5">NOT NULL</td><td class="py-1.5">Variant identifier (e.g., "Double", "Regular").</td></tr>
+              <tr class="border-b border-brand-charcoal/5"><td class="py-1.5 font-semibold text-brand-charcoal">price</td><td class="py-1.5">DECIMAL(10,2)</td><td class="py-1.5">NOT NULL</td><td class="py-1.5">The specific variant price.</td></tr>
+              <tr><td class="py-1.5 font-semibold text-brand-charcoal">is_available</td><td class="py-1.5">BOOLEAN</td><td class="py-1.5">DEFAULT TRUE</td><td class="py-1.5">Allows shutting down specific sizing lines.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 3: SQL IMPLEMENTATION -->
+    <section class="page-break mb-6">
+      <h2 class="text-xl font-extrabold border-b border-brand-charcoal/10 pb-2 mb-4 text-brand-red">3. SQL DDL Implementation</h2>
+      <p class="text-sm text-brand-muted mb-4 leading-relaxed">
+        Below is standard SQL (PostgreSQL compatible) used to construct and execute the backend database architecture:
+      </p>
+      <pre class="bg-brand-charcoal text-[#F3F4F6] text-xs p-5 rounded-2xl overflow-x-auto font-mono leading-relaxed shadow-inner">
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE categories (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    display_order INT NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE menu_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    category_id UUID NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
+    name VARCHAR(150) NOT NULL,
+    slug VARCHAR(150) UNIQUE NOT NULL,
+    short_description VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    image_url VARCHAR(512),
+    is_available BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE item_variants (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    menu_item_id UUID NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
+    is_available BOOLEAN NOT NULL DEFAULT TRUE
+);
+</pre>
+    </section>
+
+    <!-- FOOTER SIGNATURE -->
+    <footer class="border-t border-brand-charcoal/10 pt-6 mt-12 text-center text-xs text-brand-muted">
+      <p class="font-bold text-brand-charcoal mb-1">Wow Burger © 2026</p>
+      <p>Prepared for Wow Burger Development Team</p>
+    </footer>
+
+  </div>
+
+</body>
+</html>
