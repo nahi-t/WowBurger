@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm'; // Added this
+import { TypeOrmModule } from '@nestjs/typeorm'; 
 import { MenuItemsController } from './menu-items.controller';
 import { MenuItemsService } from './provider/menu-items.service';
-import { MenuItem } from '../menu-items/menu-item.entity'; // Make sure this path points to your MenuItem entity
+import { MenuItem } from '../menu-items/menu-item.entity';
 import { ItemVariant } from './item-variant.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([MenuItem,ItemVariant]), // Registers the MenuItem repository
+    TypeOrmModule.forFeature([MenuItem,ItemVariant]), 
   ],
   controllers: [MenuItemsController],
   providers: [MenuItemsService],
-  exports: [MenuItemsService], // Export it so other modules (like Orders or Categories) can use it
+  exports: [MenuItemsService], 
 })
 export class MenuItemsModule {}

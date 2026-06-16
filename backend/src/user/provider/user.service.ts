@@ -15,4 +15,6 @@ export class UserService {
   create(userData: Partial<User>): Promise<User> {
     const user = this.usersRepository.create(userData);
     return this.usersRepository.save(user);
-  } }
+  } 
+ 
+}
