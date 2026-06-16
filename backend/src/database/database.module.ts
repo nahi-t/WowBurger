@@ -14,16 +14,20 @@ import { ItemVariant } from '../menu-items/item-variant.entity';
       inject: [ConfigService],
       useFactory: (cs: ConfigService) => ({
         type: 'postgres',
-        host: cs.get<string>('POSTGRES_HOST') || 'localhost',
-        port: cs.get<number>('POSTGRES_PORT') || 5432,
-        username: cs.get<string>('POSTGRES_USER') || 'postgres',
-        password: String(cs.get('POSTGRES_PASSWORD') || ''),
-        database: cs.get<string>('POSTGRES_DB') || 'wow_burger_db',
+        url: cs.get<string>('DATABASE_URL'),
+        autoLoadEntities: true,
         
-        // 2. ADD IT HERE: Include Variant alongside MenuItem
+  
+        ssl: true,
+        extra: {
+          ssl: {
+            rejectUnauthorized: false, 
+          },
+        },
+        
         entities: [User, Category, MenuItem, ItemVariant], 
         
-        synchronize: true, 
+        synchronize: true, // Perfect for setting up WowBurger tables quickly!
         logging: cs.get('TYPEORM_LOGGING') === 'true',
       }),
     }),

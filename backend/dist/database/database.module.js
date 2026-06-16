@@ -26,11 +26,14 @@ exports.DatabaseModule = DatabaseModule = __decorate([
                 inject: [config_1.ConfigService],
                 useFactory: (cs) => ({
                     type: 'postgres',
-                    host: cs.get('POSTGRES_HOST') || 'localhost',
-                    port: cs.get('POSTGRES_PORT') || 5432,
-                    username: cs.get('POSTGRES_USER') || 'postgres',
-                    password: String(cs.get('POSTGRES_PASSWORD') || ''),
-                    database: cs.get('POSTGRES_DB') || 'wow_burger_db',
+                    url: cs.get('DATABASE_URL'),
+                    autoLoadEntities: true,
+                    ssl: true,
+                    extra: {
+                        ssl: {
+                            rejectUnauthorized: false,
+                        },
+                    },
                     entities: [user_entity_1.User, category_entity_1.Category, menu_item_entity_1.MenuItem, item_variant_entity_1.ItemVariant],
                     synchronize: true,
                     logging: cs.get('TYPEORM_LOGGING') === 'true',
