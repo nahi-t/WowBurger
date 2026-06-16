@@ -1,5 +1,5 @@
-// const API_BASE_URL = 'http://localhost:5001';
-const API_BASE_URL='https://wowburger.onrender.com';
+const API_BASE_URL = 'http://localhost:5001';
+// const API_BASE_URL='https://wowburger.onrender.com';
 
 export function getToken(): string | null {
   return localStorage.getItem('wow_burger_token');
@@ -9,8 +9,17 @@ export function setToken(token: string): void {
   localStorage.setItem('wow_burger_token', token);
 }
 
+export function setUserId(userId: string): void {
+  localStorage.setItem('wow_burger_user_id', userId);
+}
+
+export function getUserId(): string | null {
+  return localStorage.getItem('wow_burger_user_id');
+}
+
 export function removeToken(): void {
   localStorage.removeItem('wow_burger_token');
+  localStorage.removeItem('wow_burger_user_id');
 }
 
 export function getHeaders(contentType: string = 'application/json') {
@@ -26,7 +35,7 @@ export function getHeaders(contentType: string = 'application/json') {
 }
 
 // Auth API
-export async function login(email: string, password: string): Promise<{ access_token: string }> {
+export async function login(email: string, password: string): Promise<{ access_token: string; userId: string }> {
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -40,6 +49,7 @@ export async function login(email: string, password: string): Promise<{ access_t
 
   const data = await response.json();
   setToken(data.access_token);
+  setUserId(data.userId);
   return data;
 }
 
@@ -133,4 +143,18 @@ export async function deleteMenuItem(id: string) {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.message || 'Failed to delete menu item');
   }
+}
+
+// User API
+export async function updateUser(userId: string, userData: any) {
+  const response = await fetch(`${API_BASE_URL}/user/${userId}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(userData),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to update profile');
+  }
+  return response.json();
 }

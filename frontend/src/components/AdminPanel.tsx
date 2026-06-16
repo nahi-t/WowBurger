@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import { 
   login, getCategories, createCategory, updateCategory, deleteCategory,
-  getMenuItems, createMenuItem, updateMenuItem, deleteMenuItem, removeToken, getToken
+  getMenuItems, createMenuItem, updateMenuItem, deleteMenuItem, removeToken, getToken,
+  updateUser, getUserId
 } from '../services/api';
 import { MenuItem, MenuCategory, DietaryType, IngredientInfo } from '../types';
 
@@ -26,7 +27,7 @@ export default function AdminPanel({ onBack, onRefreshData }: AdminPanelProps) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [email, setEmail] = useState<string>('admin@g.com');
   const [password, setPassword] = useState<string>('admin123');
-  const [activeTab, setActiveTab] = useState<'categories' | 'items'>('items');
+  const [activeTab, setActiveTab] = useState<'categories' | 'items' | 'profile'>('items');
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   
@@ -85,11 +86,23 @@ export default function AdminPanel({ onBack, onRefreshData }: AdminPanelProps) {
   const [newOptName, setNewOptName] = useState<string>('');
   const [newOptValues, setNewOptValues] = useState<string>('');
 
+  // Profile State
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [profileEmail, setProfileEmail] = useState<string>('');
+  const [profileCurrentPassword, setProfileCurrentPassword] = useState<string>('');
+  const [profileNewPassword, setProfileNewPassword] = useState<string>('');
+  const [profileConfirmPassword, setProfileConfirmPassword] = useState<string>('');
+  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
+
   // Check login on load
   useEffect(() => {
     const token = getToken();
+    const savedUserId = getUserId();
     if (token) {
       setIsLoggedIn(true);
+      if (savedUserId) {
+        setCurrentUserId(savedUserId);
+      }
       fetchData();
     }
   }, []);
@@ -123,7 +136,8 @@ export default function AdminPanel({ onBack, onRefreshData }: AdminPanelProps) {
     setLoading(true);
     setAuthError(null);
     try {
-      await login(email, password);
+      const data = await login(email, password);
+      setCurrentUserId(data.userId);
       setIsLoggedIn(true);
       await fetchData();
       onRefreshData(); // Notify App.tsx to reload its menu list
@@ -389,6 +403,64 @@ export default function AdminPanel({ onBack, onRefreshData }: AdminPanelProps) {
     }
   };
 
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (profileNewPassword && profileNewPassword !== profileConfirmPassword) {
+      showToast('New passwords do not match.', 'error');
+      return;
+    }
+    
+    if (!profileNewPassword && !profileEmail) {
+      showToast('Please enter at least one field to update.', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const updateData: any = {};
+      
+      if (profileEmail && profileEmail !== email) {
+        updateData.email = profileEmail;
+      }
+      
+      if (profileNewPassword) {
+        updateData.password = profileNewPassword;
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        showToast('No changes detected.', 'error');
+        setLoading(false);
+        return;
+      }
+
+      // Note: You may need to pass the userId from login response
+      // For now, we'll use 'current' - update this with actual userId from auth
+      if (!currentUserId) {
+        showToast('Unable to update profile: missing user ID.', 'error');
+        setLoading(false);
+        return;
+      }
+
+      await updateUser(currentUserId, updateData);
+      
+      showToast('Profile updated successfully!', 'success');
+      setShowProfileModal(false);
+      setProfileNewPassword('');
+      setProfileConfirmPassword('');
+      setProfileCurrentPassword('');
+      
+      // Update local state if email changed
+      if (profileEmail !== email) {
+        setEmail(profileEmail);
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update profile.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // --- Render Login View ---
   if (!isLoggedIn) {
     return (
@@ -554,6 +626,16 @@ export default function AdminPanel({ onBack, onRefreshData }: AdminPanelProps) {
             >
               Categories ({categories.length})
             </button>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`px-4 py-2 text-xs font-bold uppercase rounded-lg transition-colors cursor-pointer ${
+                activeTab === 'profile'
+                  ? 'bg-red-600 text-white shadow-md'
+                  : 'text-stone-400 hover:text-stone-100'
+              }`}
+            >
+              Profile
+            </button>
           </div>
 
           <div>
@@ -565,13 +647,21 @@ export default function AdminPanel({ onBack, onRefreshData }: AdminPanelProps) {
                 <Plus size={14} />
                 <span>Create Category</span>
               </button>
-            ) : (
+            ) : activeTab === 'items' ? (
               <button
                 onClick={handleOpenAddItem}
                 className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all hover:scale-[1.02] cursor-pointer flex items-center gap-1.5"
               >
                 <Plus size={14} />
                 <span>Insert Dish / Drink</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all hover:scale-[1.02] cursor-pointer flex items-center gap-1.5"
+              >
+                <Settings size={14} />
+                <span>Edit Profile</span>
               </button>
             )}
           </div>
@@ -582,6 +672,34 @@ export default function AdminPanel({ onBack, onRefreshData }: AdminPanelProps) {
           <div className="w-full bg-stone-900 border border-stone-850 rounded-3xl p-12 text-center flex flex-col items-center">
             <RefreshCw size={36} className="text-red-500 animate-spin mb-4" />
             <h3 className="text-lg font-bold text-stone-200">Querying live data records...</h3>
+          </div>
+        )}
+
+        {/* PROFILE VIEW */}
+        {activeTab === 'profile' && !loading && (
+          <div className="bg-stone-950 border border-stone-850 rounded-3xl p-8 shadow-xl max-w-2xl mx-auto">
+            <h2 className="text-xl font-black text-white mb-6 flex items-center gap-2">
+              <Settings size={20} className="text-amber-500" />
+              Profile Settings
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-stone-400 uppercase mb-2">
+                  Email Address
+                </label>
+                <p className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-3 text-stone-100 text-sm">
+                  {email}
+                </p>
+                <p className="text-xs text-stone-500 mt-1 font-mono">Current logged-in email</p>
+              </div>
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="mt-6 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase px-6 py-3 rounded-xl transition-all cursor-pointer flex items-center gap-2"
+              >
+                <Edit3 size={14} />
+                Change Email / Password
+              </button>
+            </div>
           </div>
         )}
 
@@ -1270,6 +1388,118 @@ export default function AdminPanel({ onBack, onRefreshData }: AdminPanelProps) {
                 >
                   {loading ? <RefreshCw size={12} className="animate-spin" /> : <Check size={12} />}
                   <span>Save Menu Item</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- PROFILE UPDATE MODAL --- */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-4 z-55 overflow-y-auto">
+          <div className="w-full max-w-lg bg-stone-950 border border-stone-800 rounded-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            
+            <div className="sticky top-0 bg-stone-950 border-b border-stone-900 p-6 flex justify-between items-center z-10">
+              <h3 className="text-lg font-black text-white uppercase flex items-center gap-2">
+                <Settings size={18} className="text-amber-500" />
+                <span>Update Profile</span>
+              </h3>
+              <button 
+                onClick={() => setShowProfileModal(false)}
+                className="text-stone-400 hover:text-white p-1 rounded-lg hover:bg-stone-900 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateProfile} className="p-6 space-y-4">
+              <div>
+                <label className="block text-[10px] font-mono font-bold text-stone-400 uppercase tracking-wider mb-1">
+                  Current Email
+                </label>
+                <p className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-2.5 text-stone-300 text-xs font-mono">
+                  {email}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-mono font-bold text-stone-400 uppercase tracking-wider mb-1">
+                  New Email Address (Optional)
+                </label>
+                <input
+                  type="email"
+                  placeholder="Leave blank to keep current email"
+                  className="w-full bg-stone-900 border border-stone-800 focus:border-amber-500 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none transition-colors"
+                  value={profileEmail}
+                  onChange={(e) => setProfileEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="border-t border-stone-900 pt-4 mt-6">
+                <h4 className="text-[10px] font-mono font-bold text-amber-500 uppercase tracking-wider mb-3">
+                  Password Change (Optional)
+                </h4>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-mono font-bold text-stone-400 uppercase tracking-wider mb-1">
+                      Current Password (for verification)
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Enter current password"
+                      className="w-full bg-stone-900 border border-stone-800 focus:border-amber-500 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none transition-colors"
+                      value={profileCurrentPassword}
+                      onChange={(e) => setProfileCurrentPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono font-bold text-stone-400 uppercase tracking-wider mb-1">
+                      New Password (Min 8 characters)
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Leave blank to keep current password"
+                      minLength={8}
+                      className="w-full bg-stone-900 border border-stone-800 focus:border-amber-500 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none transition-colors"
+                      value={profileNewPassword}
+                      onChange={(e) => setProfileNewPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono font-bold text-stone-400 uppercase tracking-wider mb-1">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Re-enter new password"
+                      minLength={8}
+                      className="w-full bg-stone-900 border border-stone-800 focus:border-amber-500 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none transition-colors"
+                      value={profileConfirmPassword}
+                      onChange={(e) => setProfileConfirmPassword(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-stone-900 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowProfileModal(false)}
+                  className="px-4 py-2 text-xs font-bold uppercase rounded-xl bg-stone-900 border border-stone-850 hover:bg-stone-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 text-xs font-bold uppercase rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  {loading ? <RefreshCw size={12} className="animate-spin" /> : <Check size={12} />}
+                  <span>Save Changes</span>
                 </button>
               </div>
             </form>

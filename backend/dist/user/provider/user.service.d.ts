@@ -5,4 +5,7 @@ export declare class UserService {
     constructor(usersRepository: Repository<User>);
     findOneByEmail(email: string): Promise<User | null>;
     create(userData: Partial<User>): Promise<User>;
+    update(id: string, userData: Partial<User> & {
+        password?: string;
+    }): Promise<User>;
 }
