@@ -1,0 +1,30 @@
+# / .gitignore
+
+# Dependencies
+/node_modules
+/npm-debug.log*
+/yarn-error.log*
+
+# Build output (NestJS compilation)
+/dist
+
+# Environment variables and secrets (CRITICAL FOR NEON)
+.env
+.env.production
+.env.local
+
+# Neon CLI local cache configuration directory
+.neon/
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS / System Files
+.DS_Store
+Thumbs.db
