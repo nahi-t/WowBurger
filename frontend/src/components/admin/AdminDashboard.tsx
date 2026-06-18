@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Plus, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+// Added 'Search' to the imports below
+import { LogOut, Plus, CheckCircle, AlertTriangle, RefreshCw, Home, Search } from 'lucide-react';
 import { 
   getCategories, createCategory, updateCategory, deleteCategory,
   getMenuItems, createMenuItem, updateMenuItem, deleteMenuItem 
@@ -22,11 +23,12 @@ export default function AdminDashboard({ userId, email, onBack, onRefreshData }:
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   
-  // Pagination State Engine
+  // Pagination & Search State Engine
   const [itemsPage, setItemsPage] = useState<number>(1);
   const [itemsLimit, setItemsLimit] = useState<number>(5);
   const [itemsTotalPages, setItemsTotalPages] = useState<number>(1);
   const [itemsTotal, setItemsTotal] = useState<number>(0);
+  const [itemsSearch, setItemsSearch] = useState<string>(''); // Added search filter state
   
   // Operation Status State
   const [loading, setLoading] = useState<boolean>(false);
@@ -43,10 +45,10 @@ export default function AdminDashboard({ userId, email, onBack, onRefreshData }:
   const [isItemEditMode, setIsItemEditMode] = useState<boolean>(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
 
-  // Re-fetch data instantly when user turns pages or adjusts items per page limit
+  // Re-fetch data instantly when user turns pages, adjusts limits, or types a search query
   useEffect(() => {
     fetchRecords();
-  }, [itemsPage, itemsLimit]);
+  }, [itemsPage, itemsLimit, itemsSearch]);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     if (type === 'success') {
@@ -62,8 +64,8 @@ export default function AdminDashboard({ userId, email, onBack, onRefreshData }:
   setLoading(true);
   try {
     const cats = await getCategories();
-    // Pass pagination parameters directly down to live service endpoints
-    const itemsResponse = await getMenuItems(itemsPage, itemsLimit);
+    // Added itemsSearch as a third argument down to your endpoint hook
+    const itemsResponse = await getMenuItems(itemsPage, itemsLimit, itemsSearch);
     setCategories(cats);
     
     if (itemsResponse && itemsResponse.data) {
@@ -79,12 +81,19 @@ export default function AdminDashboard({ userId, email, onBack, onRefreshData }:
       setItemsTotal(Number(itemsResponse.meta?.total || itemsResponse.meta?.totalRecords || dataArray.length || 0));
       setItemsTotalPages(Number(itemsResponse.meta?.totalPages || Math.ceil(dataArray.length / itemsLimit) || 1));
     } else if (Array.isArray(itemsResponse)) {
-      // Fallback for flat array API structures
+      // Fallback local filtering for flat array API structures
+      let filteredItems = itemsResponse;
+      if (itemsSearch) {
+        filteredItems = itemsResponse.filter(item => 
+          item.name?.toLowerCase().includes(itemsSearch.toLowerCase()) ||
+          item.description?.toLowerCase().includes(itemsSearch.toLowerCase())
+        );
+      }
       const startIndex = (itemsPage - 1) * itemsLimit;
       const endIndex = startIndex + itemsLimit;
-      setMenuItems(itemsResponse.slice(startIndex, endIndex));
-      setItemsTotal(itemsResponse.length);
-      setItemsTotalPages(Math.ceil(itemsResponse.length / itemsLimit) || 1);
+      setMenuItems(filteredItems.slice(startIndex, endIndex));
+      setItemsTotal(filteredItems.length);
+      setItemsTotalPages(Math.ceil(filteredItems.length / itemsLimit) || 1);
     }
   } catch (err: any) {
     showToast(err.message || 'Failed to load database records.', 'error');
@@ -201,6 +210,12 @@ export default function AdminDashboard({ userId, email, onBack, onRefreshData }:
     setItemsPage(1); // Bounce to first page to avoid calculation index exceptions
   };
 
+  // Safely intercept search field updates and snap index context back to page 1
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setItemsSearch(e.target.value);
+    setItemsPage(1);
+  };
+
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 p-4 sm:p-8 font-sans selection:bg-red-500 selection:text-white">
       {successMsg && (
@@ -221,7 +236,7 @@ export default function AdminDashboard({ userId, email, onBack, onRefreshData }:
           <div>
             <div className="flex items-center gap-2">
               <span className="bg-red-600/20 text-red-500 text-[10px] font-mono font-black border border-red-500/25 px-2.5 py-1 rounded-md uppercase tracking-wider">
-                Full-Stack Admin Mode
+              Admin
               </span>
               {loading && <RefreshCw size={14} className="text-amber-500 animate-spin" />}
             </div>
@@ -230,7 +245,15 @@ export default function AdminDashboard({ userId, email, onBack, onRefreshData }:
             </h1>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-3">
+            <a
+              href="/"
+              className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-850 text-stone-300 border border-stone-800 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Home size={12} />
+              <span>Back to Home</span>
+            </a>
+            
             <button
               onClick={onBack}
               className="px-4 py-2.5 rounded-xl bg-red-950 hover:bg-red-900 text-red-200 border border-red-900/30 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1.5"
@@ -241,31 +264,49 @@ export default function AdminDashboard({ userId, email, onBack, onRefreshData }:
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="flex bg-stone-900 border border-stone-850 rounded-xl p-1 shrink-0">
-            <button
-              onClick={() => setActiveTab('items')}
-              className={`px-4 py-2 text-xs font-bold uppercase rounded-lg transition-colors cursor-pointer ${
-                activeTab === 'items' ? 'bg-red-600 text-white shadow-md' : 'text-stone-400 hover:text-stone-100'
-              }`}
-            >
-              Menu Items ({itemsTotal})
-            </button>
-            <button
-              onClick={() => setActiveTab('categories')}
-              className={`px-4 py-2 text-xs font-bold uppercase rounded-lg transition-colors cursor-pointer ${
-                activeTab === 'categories' ? 'bg-red-600 text-white shadow-md' : 'text-stone-400 hover:text-stone-100'
-              }`}
-            >
-              Categories ({categories.length})
-            </button>
+        {/* Dynamic Controls Subheader Bar (Tabs + Search + Creation Trigger Button) */}
+        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
+            {/* Navigation Filter Tabs */}
+            <div className="flex bg-stone-900 border border-stone-850 rounded-xl p-1 shrink-0">
+              <button
+                onClick={() => setActiveTab('items')}
+                className={`px-4 py-2 text-xs font-bold uppercase rounded-lg transition-colors cursor-pointer ${
+                  activeTab === 'items' ? 'bg-red-600 text-white shadow-md' : 'text-stone-400 hover:text-stone-100'
+                }`}
+              >
+                Menu Items ({itemsTotal})
+              </button>
+              <button
+                onClick={() => setActiveTab('categories')}
+                className={`px-4 py-2 text-xs font-bold uppercase rounded-lg transition-colors cursor-pointer ${
+                  activeTab === 'categories' ? 'bg-red-600 text-white shadow-md' : 'text-stone-400 hover:text-stone-100'
+                }`}
+              >
+                Categories ({categories.length})
+              </button>
+            </div>
+
+            {/* Live Search Field Input (Only targets items tab) */}
+            {activeTab === 'items' && (
+              <div className="relative flex-1 sm:w-64">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-500" />
+                <input
+                  type="text"
+                  placeholder="Search catalog dishes/drinks..."
+                  value={itemsSearch}
+                  onChange={handleSearchChange}
+                  className="w-full pl-10 pr-4 py-2 text-xs bg-stone-900 border border-stone-850 rounded-xl focus:outline-none focus:border-red-500 text-stone-100 placeholder-stone-500 transition-colors"
+                />
+              </div>
+            )}
           </div>
 
-          <div>
+          <div className="flex justify-end">
             {activeTab === 'categories' ? (
               <button
                 onClick={handleOpenAddCategory}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all hover:scale-[1.02] cursor-pointer flex items-center gap-1.5"
+                className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all hover:scale-[1.02] cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Plus size={14} />
                 <span>Create Category</span>
@@ -273,7 +314,7 @@ export default function AdminDashboard({ userId, email, onBack, onRefreshData }:
             ) : activeTab === 'items' ? (
               <button
                 onClick={handleOpenAddItem}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all hover:scale-[1.02] cursor-pointer flex items-center gap-1.5"
+                className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all hover:scale-[1.02] cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Plus size={14} />
                 <span>Insert Dish / Drink</span>

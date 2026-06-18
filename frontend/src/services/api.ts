@@ -100,10 +100,21 @@ export async function deleteCategory(id: string) {
 }
 
 // Menu Items API
-export async function getMenuItems(page: number = 1, limit: number = 50) {
-  const response = await fetch(`${API_BASE_URL}/menu-items?page=${page}&limit=${limit}`, {
+export async function getMenuItems(page: number = 1, limit: number = 5, search: string = '') {
+  // Construct parameters safely to handle special characters and empty inputs automatically
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  if (search.trim()) {
+    params.append('search', search.trim());
+  }
+
+  const response = await fetch(`${API_BASE_URL}/menu-items?${params.toString()}`, {
     headers: getHeaders(''),
   });
+  
   if (!response.ok) throw new Error('Failed to fetch menu items');
   return response.json();
 }

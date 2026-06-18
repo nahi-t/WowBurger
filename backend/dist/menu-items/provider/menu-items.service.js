@@ -23,21 +23,31 @@ let MenuItemsService = class MenuItemsService {
         this.menuItemRepository = menuItemRepository;
     }
     async findAll(paginationDto) {
-        const page = paginationDto.page ?? 1;
-        const limit = paginationDto.limit ?? 5;
+        const page = Number(paginationDto.page) || 1;
+        const limit = Number(paginationDto.limit) || 5;
+        const search = paginationDto.search ? String(paginationDto.search).trim() : '';
         const skip = (page - 1) * limit;
-        const [data, total] = await this.menuItemRepository.findAndCount({
-            skip: skip,
-            take: limit,
-            order: { createdAt: 'DESC' },
-        });
+        const queryBuilder = this.menuItemRepository.createQueryBuilder('menuItem')
+            .leftJoinAndSelect('menuItem.category', 'category')
+            .select();
+        if (search !== '') {
+            queryBuilder.andWhere(new typeorm_2.Brackets((qb) => {
+                qb.where('menuItem.name ILIKE :search', { search: `%${search}%` })
+                    .orWhere('menuItem.description ILIKE :search', { search: `%${search}%` });
+            }));
+        }
+        queryBuilder
+            .orderBy('menuItem.createdAt', 'DESC')
+            .skip(skip)
+            .take(limit);
+        const [data, total] = await queryBuilder.getManyAndCount();
         return {
             data,
             meta: {
                 total,
                 page,
                 limit,
-                totalPages: Math.ceil(total / limit),
+                totalPages: Math.ceil(total / limit) || 1,
             },
         };
     }

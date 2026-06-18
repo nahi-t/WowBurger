@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common'; // Removed unused @Query
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Brackets } from 'typeorm'; // Imported Brackets
 import { MenuItem } from '../menu-item.entity';
-import { PaginationDto } from '../dto/PaginationDto';
+import { PaginationDto } from '../dto/PaginationDto'; // Ensure this matches your file name perfectly
 
 @Injectable()
 export class MenuItemsService {
@@ -12,30 +12,48 @@ export class MenuItemsService {
   ) {}
 
   // 1. Find all available menu items with their variants and category
-async findAll(paginationDto: PaginationDto) {
-  // Ensure values are numbers, defaulting to 1 and 10 if missing
-  const page = paginationDto.page ?? 1;
-  const limit = paginationDto.limit ?? 5;
-  
-  const skip = (page - 1) * limit;
+  async findAll(paginationDto: PaginationDto) {
+    const page = Number(paginationDto.page) || 1;
+    const limit = Number(paginationDto.limit) || 5;
+    const search = paginationDto.search ? String(paginationDto.search).trim() : '';
+    
+    const skip = (page - 1) * limit;
 
-  // TypeORM findAndCount returns [data[], totalCount]
-  const [data, total] = await this.menuItemRepository.findAndCount({
-    skip: skip,
-    take: limit, // No longer undefined
-    order: { createdAt: 'DESC' }, // Good practice for consistent pagination
-  });
+    // 1. Create a Query Builder targeted at your item entity table alias
+    // We add select() to explicitly force all base properties to load for your controller mapper
+    const queryBuilder = this.menuItemRepository.createQueryBuilder('menuItem')
+      .leftJoinAndSelect('menuItem.category', 'category')
+      .select(); 
 
-  return {
-    data,
-    meta: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
-  };
-}
+    // 2. Safely apply Postgres Brackets matching to protect pagination
+    if (search !== '') {
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where('menuItem.name ILIKE :search', { search: `%${search}%` })
+            .orWhere('menuItem.description ILIKE :search', { search: `%${search}%` });
+        }),
+      );
+    }
+
+    // 3. Chain pagination parameters cleanly
+    queryBuilder
+      .orderBy('menuItem.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit);
+
+    // 4. Retrieve matching dataset and total count from Postgres
+    const [data, total] = await queryBuilder.getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    };
+  }
 
   // 2. Create a new menu item
   create(itemData: Partial<MenuItem>): Promise<MenuItem> {
@@ -47,7 +65,6 @@ async findAll(paginationDto: PaginationDto) {
   async remove(id: string): Promise<void> {
     const result = await this.menuItemRepository.delete(id);
     
-    // Optional but highly recommended: Throw a 404 if the item didn't exist
     if (result.affected === 0) {
       throw new NotFoundException(`Menu item with ID "${id}" not found`);
     }
