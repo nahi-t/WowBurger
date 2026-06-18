@@ -1,5 +1,5 @@
-// const API_BASE_URL = 'http://localhost:5001';
-const API_BASE_URL='https://wowburger.onrender.com';
+const API_BASE_URL = 'http://localhost:5001';
+// const API_BASE_URL='https://wowburger.onrender.com';
 
 export function getToken(): string | null {
   return localStorage.getItem('wow_burger_token');
@@ -100,7 +100,7 @@ export async function deleteCategory(id: string) {
 }
 
 // Menu Items API
-export async function getMenuItems(page: number = 1, limit: number = 5) {
+export async function getMenuItems(page: number = 1, limit: number = 50) {
   const response = await fetch(`${API_BASE_URL}/menu-items?page=${page}&limit=${limit}`, {
     headers: getHeaders(''),
   });
@@ -158,3 +158,23 @@ export async function updateUser(userId: string, userData: any) {
   }
   return response.json();
 }
+
+export const uploadImage = async (file: File): Promise<{ url: string }> => {
+  const formData = new FormData();
+  formData.append('image', file); // Field key matches NestJS interceptor target
+
+  const response = await fetch(`${API_BASE_URL}/uploads/image`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${getToken()}` // Pulls your admin session token out cleanly
+    },
+    body: formData // Explicit multipart stream payload boundaries handled natively
+  });
+
+  if (!response.ok) {
+    const errorDetails = await response.json().catch(() => ({}));
+    throw new Error(errorDetails.message || 'Image transfer transaction stalled.');
+  }
+
+  return await response.json(); // Returns { url: "https://res.cloudinary.com/..." }
+};

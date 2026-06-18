@@ -17,26 +17,17 @@ export interface IngredientInfo {
 export interface MenuItem {
   id: string;
   name: string;
-  category: string;
+  categoryId: string; // Use this for filtering
   price: string;
   description: string;
-  ingredients: string[]; // Retrocompatibility
-  detailedIngredients: IngredientInfo[]; // Visual interactive ingredients
+  ingredients: string[];
+  detailedIngredients: { icon: string; name: string; source: string }[];
   calories: number;
-  dietaryTags: DietaryType[];
+  dietaryTags: string[]; // e.g., ["Vegetarian"]
   image: string;
   rating: number;
-  reviewsCount: number;
-  nutrition: {
-    protein: string;
-    carbs: string;
-    fat: string;
-    sodium?: string;
-  };
-  customizableOptions?: {
-    name: string;
-    options: string[];
-  }[];
+  nutrition: { fat: string; carbs: string; sodium: string; protein: string };
+  isAvailable: boolean;
 }
 
 export interface MenuCategory {

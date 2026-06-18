@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { X, FileText, Check, RefreshCw, PlusCircle, MinusCircle } from 'lucide-react';
+import { X, FileText, Check, RefreshCw, PlusCircle, MinusCircle, Upload } from 'lucide-react';
+import { uploadImage } from '../../services/api'; // Integrated image upload utility
 import { MenuItem, MenuCategory, IngredientInfo, DietaryType } from '../../types';
 
 interface MenuItemModalProps {
@@ -27,11 +28,15 @@ export default function MenuItemModal({
   const [price, setPrice] = useState('Br 0');
   const [description, setDescription] = useState('');
   const [shortDescription, setShortDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
   const [calories, setCalories] = useState<number>(0);
   const [rating, setRating] = useState<number>(5.0);
   const [reviewsCount, setReviewsCount] = useState<number>(0);
   const [isAvailable, setIsAvailable] = useState(true);
+
+  // Real Image Upload States
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [uploading, setUploading] = useState<boolean>(false);
 
   // Ingredients
   const [ingredientsText, setIngredientsText] = useState('');
@@ -61,11 +66,14 @@ export default function MenuItemModal({
       setPrice(editingItem.price || '');
       setShortDescription((editingItem as any).shortDescription || '');
       setDescription(editingItem.description || '');
-      setImageUrl(editingItem.image || '');
       setCalories(editingItem.calories || 0);
       setRating(editingItem.rating || 5.0);
       setReviewsCount(editingItem.reviewsCount || 0);
       setIsAvailable((editingItem as any).isAvailable !== false);
+
+      // Extract existing image string for preview fallback boundary
+      setPreviewUrl(editingItem.image || '');
+      setImageFile(null);
 
       const matchedCat = categories.find((c) => c.id === (editingItem as any).categoryId);
       setCategoryId(matchedCat ? matchedCat.id : '');
@@ -86,11 +94,12 @@ export default function MenuItemModal({
       setPrice('Br 250');
       setDescription('');
       setShortDescription('');
-      setImageUrl('');
       setCalories(500);
       setRating(5.0);
       setReviewsCount(0);
       setIsAvailable(true);
+      setPreviewUrl('');
+      setImageFile(null);
 
       setIngredientsText('');
       setDetailedIngredients([]);
@@ -102,6 +111,15 @@ export default function MenuItemModal({
       setCustomOptions([]);
     }
   }, [isEditMode, editingItem, isOpen, categories]);
+
+  // Handle local image picking and spawn local component browser thumbnails instantly
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
 
   const handleAddDetailIngredient = () => {
     if (!newDetailName) return;
@@ -133,46 +151,62 @@ export default function MenuItemModal({
     setDietaryTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !categoryId || !price) {
       alert('Name, Category, and Price are required.');
       return;
     }
 
-    const ingredients = ingredientsText
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
+    setUploading(true);
+    try {
+      let finalImageUrl = previewUrl; // Fallback to current image string during item edits
 
-    const payload = {
-      name,
-      slug: slug ? slug.toLowerCase().replace(/\s+/g, '-') : name.toLowerCase().replace(/\s+/g, '-'),
-      categoryId,
-      price,
-      shortDescription: shortDescription || description.substring(0, 100),
-      description,
-      imageUrl,
-      isAvailable,
-      ingredients,
-      detailedIngredients,
-      calories: Number(calories),
-      dietaryTags,
-      rating: Number(rating),
-      reviewsCount: Number(reviewsCount),
-      nutrition: {
-        protein,
-        carbs,
-        fat,
-        ...(sodium ? { sodium } : {}),
-      },
-      customizableOptions: customOptions,
-    };
+      // If a fresh image asset file is held in state memory, push it up to Cloudinary first
+      if (imageFile) {
+        const uploadResult = await uploadImage(imageFile);
+        finalImageUrl = uploadResult.url; // Overwrites variable using the cloud secure link
+      }
 
-    onSave(payload);
+      const ingredients = ingredientsText
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const payload = {
+        name,
+        slug: slug ? slug.toLowerCase().replace(/\s+/g, '-') : name.toLowerCase().replace(/\s+/g, '-'),
+        categoryId,
+        price,
+        shortDescription: shortDescription || description.substring(0, 100),
+        description,
+        imageUrl: finalImageUrl, // The final clean image URL string matched with form specs
+        isAvailable,
+        ingredients,
+        detailedIngredients,
+        calories: Number(calories),
+        dietaryTags,
+        rating: Number(rating),
+        reviewsCount: Number(reviewsCount),
+        nutrition: {
+          protein,
+          carbs,
+          fat,
+          ...(sodium ? { sodium } : {}),
+        },
+        customizableOptions: customOptions,
+      };
+
+      onSave(payload);
+    } catch (error: any) {
+      alert(error.message || 'Image pipeline transfer to Cloudinary crashed. Stalling transaction save.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   if (!isOpen) return null;
+  const isPending = loading || uploading;
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center p-4 z-55 overflow-y-auto">
@@ -193,6 +227,34 @@ export default function MenuItemModal({
             <h4 className="text-xs font-mono font-black text-red-500 uppercase tracking-widest border-b border-stone-900 pb-1">
               1. Primary Specifications
             </h4>
+
+            {/* Cloudinary Multipart Native File Uploader View */}
+            <div>
+              <label className="block text-[10px] font-mono font-bold text-stone-400 uppercase tracking-wider mb-2">
+                Dish Representative Image (Cloudinary Storage)
+              </label>
+              <div className="flex items-center gap-4">
+                <div className="w-24 h-16 bg-stone-900 border border-stone-850 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+                  {previewUrl ? (
+                    <img src={previewUrl} alt="Thumbnail preview layout" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[9px] text-stone-600 font-mono uppercase">No Media</span>
+                  )}
+                </div>
+
+                <label className="flex items-center gap-2 px-4 py-2.5 bg-stone-900 border border-stone-800 hover:border-red-500 rounded-xl text-xs font-bold text-stone-300 hover:text-white cursor-pointer transition-colors select-none">
+                  <Upload size={14} className="text-red-500" />
+                  <span>{imageFile ? 'Change File Selected' : 'Choose Local Image'}</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={handleFileChange} 
+                    disabled={isPending} 
+                  />
+                </label>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -273,17 +335,6 @@ export default function MenuItemModal({
                 className="w-full bg-stone-900 border border-stone-800 focus:border-red-500 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none transition-colors"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-mono font-bold text-stone-400 uppercase tracking-wider mb-1">Image URL</label>
-              <input
-                type="url"
-                placeholder="https://example.com/image.jpg"
-                className="w-full bg-stone-900 border border-stone-800 focus:border-red-500 rounded-xl px-4 py-2.5 text-stone-100 text-xs focus:outline-none transition-colors"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
               />
             </div>
           </div>
@@ -541,11 +592,11 @@ export default function MenuItemModal({
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={isPending}
               className="px-4 py-2 text-xs font-bold uppercase rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
             >
-              {loading ? <RefreshCw size={12} className="animate-spin" /> : <Check size={12} />}
-              <span>{isEditMode ? 'Update Item' : 'Create Item'}</span>
+              {isPending ? <RefreshCw size={12} className="animate-spin" /> : <Check size={12} />}
+              <span>{isPending ? 'Processing...' : isEditMode ? 'Update Item' : 'Create Item'}</span>
             </button>
           </div>
         </form>

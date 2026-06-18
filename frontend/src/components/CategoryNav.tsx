@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Sparkles, GlassWater, Cookie } from 'lucide-react';
+import { Flame, Sparkles, GlassWater, Cookie, Pizza, Coffee, Apple } from 'lucide-react';
 import { MenuCategory } from '../types';
 
 interface CategoryNavProps {
@@ -9,10 +9,13 @@ interface CategoryNavProps {
 }
 
 const IconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  Flame: Flame,
-  Sparkles: Sparkles,
-  GlassWater: GlassWater,
-  Cookie: Cookie,
+  Flame,
+  Sparkles,
+  GlassWater,
+  Cookie,
+  Pizza,
+  Coffee,
+  Apple
 };
 
 export default function CategoryNav({
@@ -21,46 +24,48 @@ export default function CategoryNav({
   onSelectCategory,
 }: CategoryNavProps) {
   return (
-    <div className="w-full bg-stone-50 py-4 px-4 sticky top-0 z-20 border-b border-stone-200/60 shadow-xs" id="category-nav-sticky">
+    <div 
+      /* - Removed 'hidden md:block' so it shows on phones!
+        - On mobile, it sticks to top-0 (or below your mobile header). 
+        - High backdrop-blur-xl creates a beautiful frosted glass blur when scrolling.
+      */
+      className="w-full bg-white/70 backdrop-blur-xl py-3 md:py-4 px-4 sticky top-0 md:top-[4px] z-20 border-b border-stone-200/60 shadow-xs transition-all duration-200" 
+      id="category-nav-sticky"
+    >
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-mono font-bold uppercase tracking-wider text-stone-400">
-            Crave Categories
-          </p>
-          <span className="text-xs text-stone-400 hidden sm:inline-block font-sans">
-            ← Swipable & Fast Filter →
-          </span>
-        </div>
-
-        {/* Horizontal Slider */}
-        <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth pb-1 -mx-4 px-4 sm:mx-0 sm:px-0" id="category-scroller">
+        {/* Horizontal scroll wrapper optimized for mobile thumbs */}
+        <div 
+          className="flex gap-2.5 md:gap-3 overflow-x-auto scroll-smooth pb-1 -mx-4 px-4 md:mx-0 md:px-0" 
+          style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+          id="category-scroller"
+        >
           {categories.map((cat) => {
-            const IconComponent = IconMap[cat.iconName] || Sparkles;
-            const isActive = cat.id === activeCategoryId || (cat as any).slug === activeCategoryId;
+            const IconComponent = IconMap[cat.iconName || 'Sparkles'] || Sparkles;
+            const isActive = cat.id === activeCategoryId;
 
             return (
               <button
                 key={cat.id}
-                onClick={() => onSelectCategory((cat as any).slug || cat.id)}
-                className={`group flex items-center gap-3 px-5 py-3.5 rounded-2xl border text-sm font-semibold transition-all duration-300 whitespace-nowrap scroll-ml-6 ${
+                onClick={() => onSelectCategory(cat.id)}
+                className={`group flex items-center gap-2 md:gap-3 px-3.5 py-2 md:px-5 md:py-2.5 rounded-xl md:rounded-2xl border text-xs md:text-sm transition-all duration-300 whitespace-nowrap outline-hidden cursor-pointer select-none ${
                   isActive
-                    ? 'bg-red-600 border-red-600 text-stone-50 shadow-md shadow-red-900/10 scale-102'
-                    : 'bg-white border-stone-200 text-stone-750 hover:bg-stone-100 hover:border-stone-300'
+                    ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-600/10'
+                    : 'bg-white/50 border-stone-200/80 text-stone-800 hover:bg-stone-100 active:scale-95'
                 }`}
-                id={`cat-pill-${(cat as any).slug || cat.id}`}
               >
+                {/* Icon Wrapper */}
                 <div
-                  className={`p-1.5 rounded-lg transition-colors duration-300 ${
-                    isActive ? 'bg-white/20 text-stone-100' : 'bg-stone-100 text-red-500 group-hover:bg-red-50'
+                  className={`p-1 md:p-1.5 rounded-lg md:rounded-xl transition-all duration-300 ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-stone-100 text-red-500'
                   }`}
                 >
-                  <IconComponent size={18} />
+                  <IconComponent size={14} className={isActive ? 'stroke-[2.5]' : 'stroke-[2]'} />
                 </div>
                 
-                <div className="flex flex-col items-start gap-0.5">
-                  <span className="font-bold tracking-tight">{cat.name}</span>
-                  <span className={`text-[10px] font-normal leading-none ${isActive ? 'text-stone-300' : 'text-stone-400 group-hover:text-stone-500'}`}>
-                    {(cat.id === 'burgers' || (cat as any).slug === 'burgers') ? 'Fire-grilled' : (cat.id === 'sides' || (cat as any).slug === 'sides') ? 'Crispy fry' : (cat.id === 'drinks' || (cat as any).slug === 'drinks') ? 'Hand-spun' : 'Baked warm'}
+                {/* Category Name */}
+                <div className="flex flex-col items-start text-left">
+                  <span className={`font-bold tracking-tight text-xs md:text-sm ${isActive ? 'text-white' : 'text-stone-900'}`}>
+                    {cat.name}
                   </span>
                 </div>
               </button>

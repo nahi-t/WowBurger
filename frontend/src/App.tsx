@@ -5,10 +5,10 @@ import FilterBar from './components/FilterBar';
 import MenuCard from './components/MenuCard';
 import ItemDetail from './components/ItemDetail';
 import AdminPanel from './components/AdminPanel';
+import BottomNavigation from './components/BottomNavigation'; // <-- Imported here
 import { getCategories, getMenuItems } from './services/api';
-import { MENU_CATEGORIES, MENU_ITEMS } from './data';
 import { MenuItem, MenuCategory, DietaryType } from './types';
-import { Flame, Star, Sparkles, Check, Heart, X, ChevronRight, RefreshCw, Smile } from 'lucide-react';
+import { Flame, Star, Sparkles, Heart, X, RefreshCw, Smile } from 'lucide-react';
 
 export default function App() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
@@ -16,22 +16,20 @@ export default function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
 
-  const [activeCategoryId, setActiveCategoryId] = useState<string>('burgers');
+  const [activeCategoryId, setActiveCategoryId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedDietary, setSelectedDietary] = useState<DietaryType[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false);
-  
-  // Selected single item to trigger detailed page view
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  
+  // State for mobile bottom navigation routing
+  const [activeTab, setActiveTab] = useState<string>('food');
 
-  // Favorites tracking with persistence
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('wow_burger_favorites');
       return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+    } catch { return []; }
   });
 
   useEffect(() => {
@@ -40,310 +38,143 @@ export default function App() {
 
   const refreshData = async () => {
     try {
-      const apiCats = await getCategories();
-      const apiItems = await getMenuItems();
-      if (apiCats && apiCats.length > 0) {
+      setLoading(true);
+      const [apiCats, apiItemsResponse] = await Promise.all([
+        getCategories(),
+        getMenuItems(1, 50)
+      ]);
+
+      if (Array.isArray(apiCats) && apiCats.length > 0) {
         setCategories(apiCats);
-      } else {
-        setCategories(MENU_CATEGORIES);
+        setActiveCategoryId(apiCats[0].id);
       }
-      if (apiItems && apiItems.length > 0) {
-        setMenuItems(apiItems);
-      } else {
-        setMenuItems(MENU_ITEMS);
-      }
+
+      const items = (apiItemsResponse as any)?.data || apiItemsResponse || [];
+      setMenuItems(Array.isArray(items) ? items : []);
     } catch (err) {
-      console.warn("Failed to load real API data. Falling back to mock data.", err);
-      setCategories(MENU_CATEGORIES);
-      setMenuItems(MENU_ITEMS);
+      console.error("API error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    refreshData();
-  }, []);
+  useEffect(() => { refreshData(); }, []);
 
-  const handleToggleFavorite = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Avoid triggering card modal
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
-  const handleSelectCategory = (catId: string) => {
-    setActiveCategoryId(catId);
-    // If we're showing favorites, we preserve that but direct users towards products
-    // Smooth scroll back to categories row
-    const element = document.getElementById('category-nav-sticky');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Sync Bottom Navigation Tabs with Categories & Favorites views
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    
+    if (tabId === 'favorites') {
+      setShowFavoritesOnly(true);
+      return;
+    }
+    
+    setShowFavoritesOnly(false);
+    
+    // Find matching category in DB by name strings safely
+    const targetCategory = categories.find(c => c.name.toLowerCase().includes(tabId));
+    if (targetCategory) {
+      setActiveCategoryId(targetCategory.id);
+    } else if (tabId === 'home' && categories.length > 0) {
+      setActiveCategoryId(categories[0].id);
     }
   };
 
-  const handleToggleDietary = (tag: DietaryType) => {
-    setSelectedDietary((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  };
-
-  const handleClearFilters = () => {
-    setSelectedDietary([]);
-    setShowFavoritesOnly(false);
-    setSearchQuery('');
-  };
-
-  const handleSelectItem = (item: MenuItem) => {
-    setSelectedItem(item);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Filter computations
   const filteredItems = menuItems.filter((item) => {
-    // 1. Search Query selection
     if (searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase();
-      const matchName = item.name.toLowerCase().includes(query);
-      const matchDesc = item.description.toLowerCase().includes(query);
-      const matchIng = item.ingredients.some((ing) => ing.toLowerCase().includes(query));
-      if (!matchName && !matchDesc && !matchIng) return false;
+      const match = item.name.toLowerCase().includes(query) || 
+                    item.description.toLowerCase().includes(query) ||
+                    item.ingredients?.some(ing => ing.toLowerCase().includes(query));
+      if (!match) return false;
     }
 
-    // 2. Favorites only check
-    if (showFavoritesOnly && !favorites.includes(item.id)) {
-      return false;
-    }
+    if (showFavoritesOnly && !favorites.includes(item.id)) return false;
+    
+    // If we aren't isolated into favorites view, screen by category match
+    if (!showFavoritesOnly && item.categoryId !== activeCategoryId) return false;
 
-    // 3. Category match (only if favorites are not selected, or within favorites filter by category)
-    const categoryMatches = item.category === activeCategoryId;
-    if (!categoryMatches) {
-      return false;
-    }
-
-    // 4. Dietary options filter
     if (selectedDietary.length > 0) {
-      const matchesAllDietary = selectedDietary.every((tag) => item.dietaryTags.includes(tag));
-      if (!matchesAllDietary) return false;
+      return selectedDietary.every((tag) => 
+        item.dietaryTags?.some(dbTag => dbTag.toLowerCase() === tag.toLowerCase())
+      );
     }
-
     return true;
   });
 
-  // Calculate items counts per dietary tag GLOBALLY for the active category
   const getGlobalDietaryCounts = (): Record<DietaryType, number> => {
-    const counts: Record<DietaryType, number> = {
-      [DietaryType.VEGETARIAN]: 0,
-      [DietaryType.VEGAN]: 0,
-      [DietaryType.GLUTEN_FREE]: 0,
-      [DietaryType.SPICY]: 0,
-      [DietaryType.SIGNATURE]: 0,
-    };
-
-    menuItems.forEach((item) => {
-      const categoryMatches = item.category === activeCategoryId;
-      if (categoryMatches) {
-        item.dietaryTags.forEach((tag) => {
-          counts[tag] = (counts[tag] || 0) + 1;
-        });
-      }
+    const counts = { [DietaryType.VEGETARIAN]: 0, [DietaryType.VEGAN]: 0, [DietaryType.GLUTEN_FREE]: 0, [DietaryType.SPICY]: 0, [DietaryType.SIGNATURE]: 0 };
+    menuItems.filter(i => i.categoryId === activeCategoryId).forEach(item => {
+      item.dietaryTags?.forEach(tag => {
+        const key = tag.toUpperCase() as DietaryType;
+        if (counts.hasOwnProperty(key)) counts[key]++;
+      });
     });
-
     return counts;
   };
 
-  const currentCategoryGourmetCount = getGlobalDietaryCounts();
-  const activeCategoryDetail = categories.find((cat) => cat.id === activeCategoryId || (cat as any).slug === activeCategoryId);
-
-  if (loading && categories.length === 0) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-stone-900 text-stone-100 flex flex-col justify-center items-center p-4">
-        <RefreshCw className="animate-spin text-red-650 mb-4" size={32} />
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-400">Loading WowBurger digital menu...</p>
+      <div className="min-h-screen bg-stone-900 text-stone-100 flex flex-col justify-center items-center">
+        <RefreshCw className="animate-spin text-red-600 mb-4" size={32} />
+        <p className="text-xs font-mono uppercase tracking-widest">Loading from Database...</p>
       </div>
     );
   }
 
-  if (showAdminPanel) {
-    return (
-      <AdminPanel 
-        onBack={() => setShowAdminPanel(false)} 
-        onRefreshData={refreshData} 
-      />
-    );
-  }
+  if (showAdminPanel) return <AdminPanel onBack={() => setShowAdminPanel(false)} onRefreshData={refreshData} />;
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 selection:bg-red-500 selection:text-white" id="app-root-container">
+    // pb-24 ensures the main views don't hit the bottom navbar frame boundaries on mobile
+    <div className="min-h-screen bg-stone-50 text-stone-900 pb-24 md:pb-0">
       {selectedItem ? (
-        <ItemDetail
-          item={selectedItem}
-          onBack={() => setSelectedItem(null)}
-          isFavorite={favorites.includes(selectedItem.id)}
-          onToggleFavorite={handleToggleFavorite}
-        />
+        <ItemDetail item={selectedItem} onBack={() => setSelectedItem(null)} />
       ) : (
         <>
-          {/* Main Digital Lounge Header */}
-          <Header
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            favoritesCount={favorites.length}
-            onViewFavorites={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            showFavoritesOnly={showFavoritesOnly}
-            onAdminClick={() => setShowAdminPanel(true)}
+          <Header 
+            searchQuery={searchQuery} setSearchQuery={setSearchQuery} 
+            favoritesCount={favorites.length} onViewFavorites={() => { setShowFavoritesOnly(!showFavoritesOnly); setActiveTab(showFavoritesOnly ? 'food' : 'favorites'); }} 
+            showFavoritesOnly={showFavoritesOnly} onAdminClick={() => setShowAdminPanel(true)} 
           />
+          
+          {/* Hide secondary sub-bars visually when isolated to favorites dashboard */}
+          {!showFavoritesOnly && (
+            <>
+              <CategoryNav categories={categories} activeCategoryId={activeCategoryId} onSelectCategory={setActiveCategoryId} />
+              <FilterBar selectedDietary={selectedDietary} onToggleDietary={(t) => setSelectedDietary(prev => prev.includes(t) ? prev.filter(x => x!==t) : [...prev, t])} onClearFilters={() => setSelectedDietary([])} itemsCounts={getGlobalDietaryCounts()} />
+            </>
+          )}
 
-          {/* Interactive Category Swipe Carousel */}
-          <CategoryNav
-            categories={categories}
-            activeCategoryId={activeCategoryId}
-            onSelectCategory={handleSelectCategory}
-          />
-
-          {/* Multi-Dietary filter pills bar */}
-          <FilterBar
-            selectedDietary={selectedDietary}
-            onToggleDietary={handleToggleDietary}
-            onClearFilters={handleClearFilters}
-            itemsCounts={currentCategoryGourmetCount}
-          />
-
-          {/* Core Content Area */}
-          <main className="max-w-7xl mx-auto px-4 py-8 relative">
-            {/* Category Banner Title info */}
-            <div className="mb-8 flex flex-col items-start justify-between gap-2 border-l-4 border-red-600 pl-4">
-              <h2 className="text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
-                <span>{activeCategoryDetail?.name}</span>
-                <span className="text-sm font-mono text-stone-400 font-bold bg-stone-100 px-2 py-0.5 rounded-md">
-                  {filteredItems.length} options matching
-                </span>
+          <main className="max-w-7xl mx-auto px-4 py-6 md:py-8">
+            <div className="mb-6 md:mb-8 border-l-4 border-red-600 pl-4">
+              <h2 className="text-xl md:text-2xl font-black">
+                {showFavoritesOnly ? 'My Favorites' : (categories.find(c => c.id === activeCategoryId)?.name || 'Menu')}
               </h2>
-              <p className="text-xs text-stone-500 font-sans max-w-xl">
-                {activeCategoryDetail?.description}
-              </p>
+              <p className="text-xs text-stone-500">{filteredItems.length} options matching</p>
             </div>
 
-            {/* Empty States (Search or lifestyle filter mismatch) */}
             {filteredItems.length === 0 ? (
-              <div className="w-full bg-white border border-stone-200/50 rounded-3xl p-12 text-center shadow-xs flex flex-col items-center max-w-lg mx-auto mt-6">
-                <div className="w-16 h-16 bg-red-100/50 text-red-600 rounded-2xl flex items-center justify-center mb-4">
-                  <X size={28} />
-                </div>
-                
-                <h3 className="text-lg font-black text-stone-850">No Menu Matches Found</h3>
-                
-                <p className="text-stone-500 text-sm mt-2 leading-relaxed">
-                  We elements-filtered carefully but found nothing matching. Try broadening your options or reset the filters below.
-                </p>
-
-                <button
-                  onClick={handleClearFilters}
-                  className="mt-6 inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-850 text-white font-semibold text-xs py-3 px-5 rounded-xl transition-all duration-300 shadow-md hover:scale-102"
-                >
-                  <RefreshCw size={14} />
-                  <span>Reset All Active Filters</span>
-                </button>
+              <div className="text-center py-16 md:py-20 border border-dashed rounded-2xl md:rounded-3xl bg-white px-4">
+                <X className="mx-auto text-red-500 mb-4" size={32} />
+                <h3 className="font-black text-sm md:text-base">No Matches Found</h3>
+                <button onClick={() => {setSearchQuery(''); setSelectedDietary([]); setShowFavoritesOnly(false); setActiveTab('food');}} className="mt-4 px-4 py-2 bg-stone-900 text-white rounded-xl text-xs font-bold">Reset Filters</button>
               </div>
             ) : (
-              /* Two-column grid layout on mobile, 3-column on tablet/desktop */
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8" id="menu-items-grid">
+              // Changed grid structure to grid-cols-1 on mobile viewports
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {filteredItems.map((item) => (
-                  <MenuCard
-                    key={item.id}
-                    item={item}
-                    onSelectItem={handleSelectItem}
-                    isFavorite={favorites.includes(item.id)}
-                    onToggleFavorite={handleToggleFavorite}
-                  />
+                  <MenuCard key={item.id} item={item} onSelectItem={setSelectedItem} isFavorite={favorites.includes(item.id)} onToggleFavorite={(id, e) => { e.stopPropagation(); setFavorites(prev => prev.includes(id) ? prev.filter(f=>f!==id) : [...prev, id]); }} />
                 ))}
               </div>
             )}
           </main>
 
-          {/* Elegant Mobile Bottom Navigation Bar (Visible only on small mobile devices) */}
-          <div className="fixed bottom-0 inset-x-0 h-16 bg-white/95 backdrop-blur-md border-t border-stone-200/80 flex sm:hidden items-center justify-around z-45 px-2 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] pb-safe">
-            <button
-              onClick={() => {
-                setSelectedItem(null);
-                handleClearFilters();
-                setActiveCategoryId('burgers');
-              }}
-              className={`flex flex-col items-center justify-center flex-1 py-1.5 transition-colors cursor-pointer ${
-                activeCategoryId === 'burgers' && !showFavoritesOnly && !selectedItem
-                  ? 'text-red-600 font-extrabold'
-                  : 'text-stone-500 font-medium'
-              }`}
-            >
-              <Smile size={18} />
-              <span className="text-[10px] tracking-tight mt-0.5">Home</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedItem(null);
-                setShowFavoritesOnly(false);
-                setActiveCategoryId('burgers');
-              }}
-              className={`flex flex-col items-center justify-center flex-1 py-1.5 transition-colors cursor-pointer ${
-                (activeCategoryId === 'burgers' || activeCategoryId === 'sides' || activeCategoryId === 'desserts') && !showFavoritesOnly && !selectedItem
-                  ? 'text-red-500 font-extrabold'
-                  : 'text-stone-500 font-medium'
-              }`}
-            >
-              <Flame size={18} />
-              <span className="text-[10px] tracking-tight mt-0.5">Food</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedItem(null);
-                setShowFavoritesOnly(false);
-                setActiveCategoryId('drinks');
-              }}
-              className={`flex flex-col items-center justify-center flex-1 py-1.5 transition-colors cursor-pointer ${
-                activeCategoryId === 'drinks' && !showFavoritesOnly && !selectedItem
-                  ? 'text-red-500 font-extrabold'
-                  : 'text-stone-500 font-medium'
-              }`}
-            >
-              <Sparkles size={18} />
-              <span className="text-[10px] tracking-tight mt-0.5">Drinks</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedItem(null);
-                setShowFavoritesOnly(true);
-              }}
-              className={`flex flex-col items-center justify-center flex-1 py-1.5 transition-colors cursor-pointer relative ${
-                showFavoritesOnly && !selectedItem
-                  ? 'text-red-500 font-bold'
-                  : 'text-stone-500 font-medium'
-              }`}
-            >
-              <Heart size={18} className={showFavoritesOnly ? 'fill-red-500 text-red-500' : ''} />
-              <span className="text-[10px] tracking-tight mt-0.5">Favorites</span>
-              {favorites.length > 0 && (
-                <span className="absolute top-1 right-5 bg-red-600 text-white font-mono text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">
-                  {favorites.length}
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* Simple digital footer info */}
-          <footer className="w-full bg-stone-900 text-stone-500 py-12 px-4 border-t border-stone-800 text-center font-mono text-xs relative z-10 mt-16 mb-16 sm:mb-0">
-            <div className="max-w-7xl mx-auto flex flex-col items-center gap-4">
-              <span className="font-extrabold text-stone-300 flex items-center gap-2">
-                <Smile size={16} className="text-amber-500 animate-spin" />
-                <span>WOW BURGER DIGITAL MENULOG © 2026</span>
-              </span>
-              <p className="max-w-md text-stone-500 font-sans leading-relaxed text-[11px]">
-                Wow Burger guarantees 100% grass-fed Angus patties. Recipe customizers help plan nutritional intakes. Thank you for placing trust in our plates.
-              </p>
-            </div>
-          </footer>
+          {/* Bottom Fixed Navigation UI */}
+          <BottomNavigation 
+            currentTab={activeTab} 
+            onChangeTab={handleTabChange} 
+            favoriteCount={favorites.length} 
+          />
         </>
       )}
     </div>

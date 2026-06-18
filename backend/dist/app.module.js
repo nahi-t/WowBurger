@@ -16,6 +16,8 @@ const database_module_1 = require("./database/database.module");
 const auth_module_1 = require("./auth/auth.module");
 const categories_module_1 = require("./categories/categories.module");
 const menu_items_module_1 = require("./menu-items/menu-items.module");
+const cloudinary_module_1 = require("./cloudinary/cloudinary.module");
+const uplode_module_1 = require("./uplode/uplode.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -25,7 +27,9 @@ exports.AppModule = AppModule = __decorate([
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             auth_module_1.AuthModule,
             categories_module_1.CategoriesModule,
-            menu_items_module_1.MenuItemsModule
+            menu_items_module_1.MenuItemsModule,
+            cloudinary_module_1.CloudinaryModule,
+            uplode_module_1.UplodeModule
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

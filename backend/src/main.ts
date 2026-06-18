@@ -16,6 +16,17 @@ async function bootstrap() {
   whitelist: true,
 }));
 
+// app.use(
+//   helmet({
+//     contentSecurityPolicy: {
+//       directives: {
+//         defaultSrc: ["'self'"],
+//         imgSrc: ["'self'", "data:", "https://res.cloudinary.com"], // 👈 ALLOW CLOUDINARY IMAGES
+//       },
+//     },
+//   }),
+// );
+
   // Enable CORS
   app.enableCors();
 
