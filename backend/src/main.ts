@@ -6,9 +6,15 @@ import { CategoriesService } from './categories/provider/categories.service';
 import { MenuItemsService } from './menu-items/provider/menu-items.service';
 import { SEED_CATEGORIES, SEED_MENU_ITEMS } from './database/seed-data';
 import * as bcrypt from 'bcrypt';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalPipes(new ValidationPipe({
+  transform: true, // Automatically converts query strings to numbers
+  whitelist: true,
+}));
 
   // Enable CORS
   app.enableCors();

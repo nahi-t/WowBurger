@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MenuItem } from '../menu-item.entity';
+import { PaginationDto } from '../dto/PaginationDto';
 
 @Injectable()
 export class MenuItemsService {
@@ -11,14 +12,30 @@ export class MenuItemsService {
   ) {}
 
   // 1. Find all available menu items with their variants and category
-  findAll(): Promise<MenuItem[]> {
-    return this.menuItemRepository.find({
-      relations: {
-        category: true,
-        variants: true,
-      },
-    });
-  }
+async findAll(paginationDto: PaginationDto) {
+  // Ensure values are numbers, defaulting to 1 and 10 if missing
+  const page = paginationDto.page ?? 1;
+  const limit = paginationDto.limit ?? 5;
+  
+  const skip = (page - 1) * limit;
+
+  // TypeORM findAndCount returns [data[], totalCount]
+  const [data, total] = await this.menuItemRepository.findAndCount({
+    skip: skip,
+    take: limit, // No longer undefined
+    order: { createdAt: 'DESC' }, // Good practice for consistent pagination
+  });
+
+  return {
+    data,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
 
   // 2. Create a new menu item
   create(itemData: Partial<MenuItem>): Promise<MenuItem> {

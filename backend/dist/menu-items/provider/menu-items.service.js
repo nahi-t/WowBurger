@@ -22,13 +22,24 @@ let MenuItemsService = class MenuItemsService {
     constructor(menuItemRepository) {
         this.menuItemRepository = menuItemRepository;
     }
-    findAll() {
-        return this.menuItemRepository.find({
-            relations: {
-                category: true,
-                variants: true,
-            },
+    async findAll(paginationDto) {
+        const page = paginationDto.page ?? 1;
+        const limit = paginationDto.limit ?? 5;
+        const skip = (page - 1) * limit;
+        const [data, total] = await this.menuItemRepository.findAndCount({
+            skip: skip,
+            take: limit,
+            order: { createdAt: 'DESC' },
         });
+        return {
+            data,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
     create(itemData) {
         const newItem = this.menuItemRepository.create(itemData);

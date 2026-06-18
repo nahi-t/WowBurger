@@ -19,14 +19,15 @@ const roles_guard_1 = require("../auth/roles.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
 const user_entity_1 = require("../user/user.entity");
 const passport_1 = require("@nestjs/passport");
+const PaginationDto_1 = require("./dto/PaginationDto");
 let MenuItemsController = class MenuItemsController {
     menuItemsService;
     constructor(menuItemsService) {
         this.menuItemsService = menuItemsService;
     }
-    async findAll() {
-        const items = await this.menuItemsService.findAll();
-        return items.map(item => ({
+    async findAll(paginationDto) {
+        const result = await this.menuItemsService.findAll(paginationDto);
+        const formattedData = result.data.map(item => ({
             id: item.id,
             name: item.name,
             slug: item.slug,
@@ -46,6 +47,10 @@ let MenuItemsController = class MenuItemsController {
             isAvailable: item.isAvailable,
             categoryId: item.categoryId,
         }));
+        return {
+            data: formattedData,
+            meta: result.meta,
+        };
     }
     create(itemData) {
         return this.menuItemsService.create(itemData);
@@ -60,8 +65,9 @@ let MenuItemsController = class MenuItemsController {
 exports.MenuItemsController = MenuItemsController;
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [PaginationDto_1.PaginationDto]),
     __metadata("design:returntype", Promise)
 ], MenuItemsController.prototype, "findAll", null);
 __decorate([

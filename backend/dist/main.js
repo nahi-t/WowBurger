@@ -41,8 +41,13 @@ const categories_service_1 = require("./categories/provider/categories.service")
 const menu_items_service_1 = require("./menu-items/provider/menu-items.service");
 const seed_data_1 = require("./database/seed-data");
 const bcrypt = __importStar(require("bcrypt"));
+const common_1 = require("@nestjs/common");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        transform: true,
+        whitelist: true,
+    }));
     app.enableCors();
     const userService = app.get(user_service_1.UserService);
     const defaultAdminEmail = 'admin@g.com';

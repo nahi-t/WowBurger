@@ -100,8 +100,8 @@ export async function deleteCategory(id: string) {
 }
 
 // Menu Items API
-export async function getMenuItems() {
-  const response = await fetch(`${API_BASE_URL}/menu-items`, {
+export async function getMenuItems(page: number = 1, limit: number = 5) {
+  const response = await fetch(`${API_BASE_URL}/menu-items?page=${page}&limit=${limit}`, {
     headers: getHeaders(''),
   });
   if (!response.ok) throw new Error('Failed to fetch menu items');
