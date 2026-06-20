@@ -33,6 +33,7 @@ Thumbs.db
 **/build/
 **/+*
 **/*.mks
+**/node_modules/
 
 # ==========================================
 # 4. Local Database files
