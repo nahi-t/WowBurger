@@ -61,7 +61,7 @@ export default function MenuItemsTable({
                 </td>
                 <td className="p-4 sm:p-5">
                   <span className="inline-block bg-stone-900 border border-stone-800 text-stone-300 px-2 py-0.5 rounded font-mono text-[10px] uppercase font-bold">
-                    {item.category}
+                    {item.categoryId}
                   </span>
                 </td>
                 <td className="p-4 sm:p-5 font-bold text-red-500 font-mono">{item.price}</td>

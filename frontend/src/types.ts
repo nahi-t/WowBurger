@@ -23,11 +23,14 @@ export interface MenuItem {
   ingredients: string[];
   detailedIngredients: { icon: string; name: string; source: string }[];
   calories: number;
-  dietaryTags: string[]; // e.g., ["Vegetarian"]
+  dietaryTags: DietaryType[];// e.g., ["Vegetarian"]
   image: string;
   rating: number;
   nutrition: { fat: string; carbs: string; sodium: string; protein: string };
   isAvailable: boolean;
+  reviewsCount?: number; 
+ customizableOptions?: { name: string; options: string[] }[];
+  
 }
 
 export interface MenuCategory {

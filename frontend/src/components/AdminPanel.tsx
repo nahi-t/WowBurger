@@ -10,8 +10,8 @@ interface AdminPanelProps {
 
 export default function AdminPanel({ onBack, onRefreshData }: AdminPanelProps) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [email, setEmail] = useState<string>('admin@g.com');
-  const [password, setPassword] = useState<string>('admin123');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [userId, setUserId] = useState<string>('');
   
   const [loading, setLoading] = useState<boolean>(false);
@@ -31,7 +31,7 @@ export default function AdminPanel({ onBack, onRefreshData }: AdminPanelProps) {
     setLoading(true);
     setAuthError(null);
     try {
-      const data = await login(email, password);
+      const data = await login(email,password);
       
       // Fixed: Securely handles alternative property mappings across varying endpoint structures
       if (data && ((data as any).access_token || (data as any).token)) {
