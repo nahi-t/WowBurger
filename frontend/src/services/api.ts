@@ -1,5 +1,5 @@
-const API_BASE_URL = 'http://localhost:5001';
-// const API_BASE_URL='https://wowburger.onrender.com';
+// const API_BASE_URL = 'http://localhost:5001';
+ const API_BASE_URL='https://wowburger.onrender.com';
 
 export function getToken(): string | null {
   return localStorage.getItem('wow_burger_token');
