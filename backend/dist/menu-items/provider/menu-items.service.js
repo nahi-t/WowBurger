@@ -17,10 +17,13 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const menu_item_entity_1 = require("../menu-item.entity");
+const cache_manager_1 = require("@nestjs/cache-manager");
 let MenuItemsService = class MenuItemsService {
     menuItemRepository;
-    constructor(menuItemRepository) {
+    cacheManager;
+    constructor(menuItemRepository, cacheManager) {
         this.menuItemRepository = menuItemRepository;
+        this.cacheManager = cacheManager;
     }
     async findAll(paginationDto) {
         const page = Number(paginationDto.page) || 1;
@@ -28,8 +31,7 @@ let MenuItemsService = class MenuItemsService {
         const search = paginationDto.search ? String(paginationDto.search).trim() : '';
         const skip = (page - 1) * limit;
         const queryBuilder = this.menuItemRepository.createQueryBuilder('menuItem')
-            .leftJoinAndSelect('menuItem.category', 'category')
-            .select();
+            .leftJoinAndSelect('menuItem.category', 'category');
         if (search !== '') {
             queryBuilder.andWhere(new typeorm_2.Brackets((qb) => {
                 qb.where('menuItem.name ILIKE :search', { search: `%${search}%` })
@@ -41,8 +43,17 @@ let MenuItemsService = class MenuItemsService {
             .skip(skip)
             .take(limit);
         const [data, total] = await queryBuilder.getManyAndCount();
+        const dataWithViews = await Promise.all(data.map(async (item) => {
+            const targetId = String(item.id).trim();
+            const rawViews = await this.cacheManager.get(`views:${targetId}`);
+            const parsedViews = rawViews !== undefined && rawViews !== null ? Number(rawViews) : 0;
+            return {
+                ...item,
+                views: isNaN(parsedViews) ? 0 : parsedViews,
+            };
+        }));
         return {
-            data,
+            data: dataWithViews,
             meta: {
                 total,
                 page,
@@ -76,6 +87,7 @@ exports.MenuItemsService = MenuItemsService;
 exports.MenuItemsService = MenuItemsService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(menu_item_entity_1.MenuItem)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(1, (0, common_1.Inject)(cache_manager_1.CACHE_MANAGER)),
+    __metadata("design:paramtypes", [typeorm_2.Repository, Object])
 ], MenuItemsService);
 //# sourceMappingURL=menu-items.service.js.map

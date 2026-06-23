@@ -36,6 +36,7 @@ async findAll(@Query() paginationDto: PaginationDto) {
     customizableOptions: item.customizableOptions || [],
     isAvailable: item.isAvailable,
     categoryId: item.categoryId,
+    views: (item as any).views || 0,
   }));
 
   // 3. Return the formatted data along with the meta so your frontend stays functional

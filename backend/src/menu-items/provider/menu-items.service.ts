@@ -1,17 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common'; // Removed unused @Query
+// src/menu-items/menu-items.service.ts
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Brackets } from 'typeorm'; // Imported Brackets
+import { Repository, Brackets } from 'typeorm';
 import { MenuItem } from '../menu-item.entity';
-import { PaginationDto } from '../dto/PaginationDto'; // Ensure this matches your file name perfectly
+import { PaginationDto } from '../dto/PaginationDto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class MenuItemsService {
   constructor(
     @InjectRepository(MenuItem)
     private readonly menuItemRepository: Repository<MenuItem>,
+    
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
 
-  // 1. Find all available menu items with their variants and category
+  // 1. Find all available menu items with their variants, category, and live view counts
   async findAll(paginationDto: PaginationDto) {
     const page = Number(paginationDto.page) || 1;
     const limit = Number(paginationDto.limit) || 5;
@@ -20,10 +26,9 @@ export class MenuItemsService {
     const skip = (page - 1) * limit;
 
     // 1. Create a Query Builder targeted at your item entity table alias
-    // We add select() to explicitly force all base properties to load for your controller mapper
     const queryBuilder = this.menuItemRepository.createQueryBuilder('menuItem')
       .leftJoinAndSelect('menuItem.category', 'category')
-      .select(); 
+     
 
     // 2. Safely apply Postgres Brackets matching to protect pagination
     if (search !== '') {
@@ -44,8 +49,25 @@ export class MenuItemsService {
     // 4. Retrieve matching dataset and total count from Postgres
     const [data, total] = await queryBuilder.getManyAndCount();
 
+    // 5. HYDRATION: Fetch live view numbers from Redis for each item concurrently
+    // Fixes the type casting gap by forcing clean string keys and numeric values
+    const dataWithViews = await Promise.all(
+      data.map(async (item) => {
+        const targetId = String(item.id).trim();
+        const rawViews = await this.cacheManager.get(`views:${targetId}`);
+        
+        // Explicitly convert raw cache data to an integer
+        const parsedViews = rawViews !== undefined && rawViews !== null ? Number(rawViews) : 0;
+
+        return {
+          ...item,
+          views: isNaN(parsedViews) ? 0 : parsedViews,
+        };
+      })
+    );
+
     return {
-      data,
+      data: dataWithViews,
       meta: {
         total,
         page,

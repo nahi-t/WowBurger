@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Flame, Leaf, Shield, Award, Heart, Sparkles } from 'lucide-react';
+import { Star, Flame, Leaf, Shield, Award, Heart, Sparkles, Eye } from 'lucide-react';
 import { MenuItem } from '../types';
 
 interface MenuCardProps {
@@ -19,6 +19,7 @@ const getTagIcon = (tag: string) => {
   return <Award size={10} className="text-purple-500" />;
 };
 
+
 export default function MenuCard({
   item,
   onSelectItem,
@@ -26,14 +27,17 @@ export default function MenuCard({
   onToggleFavorite,
 }: MenuCardProps) {
   
+  
   const ratingValue = typeof item.rating === 'number' ? item.rating : 5.0;
+
+  
 
   return (
     <div
       onClick={() => onSelectItem(item)}
       className="group bg-white rounded-2xl md:rounded-3xl border border-stone-200/50 overflow-hidden shadow-xs hover:shadow-xl hover:border-red-500/10 cursor-pointer transform md:hover:-translate-y-1.5 transition-all duration-400 flex flex-col h-full relative"
     >
-      {/* Top Image Box (Aspect ratio keeps it vertical everywhere) */}
+      {/* Top Image Box */}
       <div className="relative aspect-[4/3] w-full bg-stone-100 overflow-hidden shrink-0">
         <img
           src={item.image}
@@ -62,7 +66,7 @@ export default function MenuCard({
           <span>{ratingValue.toFixed(1)}</span>
         </span>
 
-        {/* Dietary Tags (Hidden on mobile grid to prevent layout crowding) */}
+        {/* Dietary Tags */}
         <div className="hidden md:flex absolute left-3.5 bottom-3.5 flex-wrap gap-1 pointer-events-none">
           {item.dietaryTags?.map((tag) => (
             <span
@@ -93,7 +97,7 @@ export default function MenuCard({
             {item.description}
           </p>
 
-          {/* Core Stack (Desktop-only to optimize grid card space) */}
+          {/* Core Stack */}
           <div className="hidden md:block mb-3">
             <span className="text-[9px] uppercase tracking-wider font-mono font-bold text-stone-400 block mb-1">
               Core Stack
@@ -110,10 +114,19 @@ export default function MenuCard({
 
         {/* Footer info row */}
         <div className="pt-1.5 md:pt-2 border-t border-stone-100 flex items-center justify-between text-[9px] md:text-[11px] font-mono text-stone-400">
-          <span className="flex items-center gap-0.5">
-            <Sparkles size={9} className="text-amber-500" />
-            <span>{item.calories} cal</span>
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-0.5">
+              <Sparkles size={9} className="text-amber-500" />
+              <span>{item.calories} cal</span>
+            </span>
+
+            {/* View Counter Display Layout */}
+            <span className="flex items-center gap-0.5 text-stone-400">
+              <Eye size={10} />
+              <span>{item.views || 0} views</span>
+            </span>
+          </div>
+
           <span className="text-red-500 font-bold group-hover:translate-x-1 transition-transform text-[10px] md:text-xs">
             Details →
           </span>

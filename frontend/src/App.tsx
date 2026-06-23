@@ -5,7 +5,7 @@ import FilterBar from './components/FilterBar';
 import MenuCard from './components/MenuCard';
 import ItemDetail from './components/ItemDetail';
 import AdminPanel from './components/AdminPanel';
-import BottomNavigation from './components/BottomNavigation'; // <-- Imported here
+import BottomNavigation from './components/BottomNavigation';
 import { getCategories, getMenuItems } from './services/api';
 import { MenuItem, MenuCategory, DietaryType } from './types';
 import { Flame, Star, Sparkles, Heart, X, RefreshCw, Smile } from 'lucide-react';
@@ -39,6 +39,7 @@ export default function App() {
   const refreshData = async () => {
     try {
       setLoading(true);
+      // Fetches categories and your new page 1 limit 50 backend pagination
       const [apiCats, apiItemsResponse] = await Promise.all([
         getCategories(),
         getMenuItems(1, 50)
@@ -46,9 +47,12 @@ export default function App() {
 
       if (Array.isArray(apiCats) && apiCats.length > 0) {
         setCategories(apiCats);
-        setActiveCategoryId(apiCats[0].id);
+        if (!activeCategoryId) {
+          setActiveCategoryId(apiCats[0].id);
+        }
       }
 
+      // Targets response.data safely from your new paginated NestJS output
       const items = (apiItemsResponse as any)?.data || apiItemsResponse || [];
       setMenuItems(Array.isArray(items) ? items : []);
     } catch (err) {
@@ -125,10 +129,18 @@ export default function App() {
   if (showAdminPanel) return <AdminPanel onBack={() => setShowAdminPanel(false)} onRefreshData={refreshData} />;
 
   return (
-    // pb-24 ensures the main views don't hit the bottom navbar frame boundaries on mobile
     <div className="min-h-screen bg-stone-50 text-stone-900 pb-24 md:pb-0">
       {selectedItem ? (
-        <ItemDetail item={selectedItem} onBack={() => setSelectedItem(null)} />
+        <ItemDetail 
+          item={selectedItem} 
+          onBack={async () => {
+            setSelectedItem(null);
+            // 🔄 BACKGROUND REFRESH: Reload data silenty so the card's views sync immediately
+            const apiItemsResponse = await getMenuItems(1, 50);
+            const items = (apiItemsResponse as any)?.data || apiItemsResponse || [];
+            setMenuItems(Array.isArray(items) ? items : []);
+          }} 
+        />
       ) : (
         <>
           <Header 
@@ -137,7 +149,6 @@ export default function App() {
             showFavoritesOnly={showFavoritesOnly} onAdminClick={() => setShowAdminPanel(true)} 
           />
           
-          {/* Hide secondary sub-bars visually when isolated to favorites dashboard */}
           {!showFavoritesOnly && (
             <>
               <CategoryNav categories={categories} activeCategoryId={activeCategoryId} onSelectCategory={setActiveCategoryId} />
@@ -160,16 +171,24 @@ export default function App() {
                 <button onClick={() => {setSearchQuery(''); setSelectedDietary([]); setShowFavoritesOnly(false); setActiveTab('food');}} className="mt-4 px-4 py-2 bg-stone-900 text-white rounded-xl text-xs font-bold">Reset Filters</button>
               </div>
             ) : (
-              // Changed grid structure to grid-cols-1 on mobile viewports
+              /* Mapped grid layout safely passing live view properties */
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {filteredItems.map((item) => (
-                  <MenuCard key={item.id} item={item} onSelectItem={setSelectedItem} isFavorite={favorites.includes(item.id)} onToggleFavorite={(id, e) => { e.stopPropagation(); setFavorites(prev => prev.includes(id) ? prev.filter(f=>f!==id) : [...prev, id]); }} />
+                  <MenuCard 
+                    key={item.id} 
+                    item={item} // Automatically displays item.views inside your new MenuCard component footer layout!
+                    onSelectItem={setSelectedItem} 
+                    isFavorite={favorites.includes(item.id)} 
+                    onToggleFavorite={(id, e) => { 
+                      e.stopPropagation(); 
+                      setFavorites(prev => prev.includes(id) ? prev.filter(f=>f!==id) : [...prev, id]); 
+                    }} 
+                  />
                 ))}
               </div>
             )}
           </main>
 
-          {/* Bottom Fixed Navigation UI */}
           <BottomNavigation 
             currentTab={activeTab} 
             onChangeTab={handleTabChange} 

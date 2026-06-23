@@ -32,6 +32,7 @@ export declare class MenuItemsController {
             }[];
             isAvailable: boolean;
             categoryId: string;
+            views: any;
         }[];
         meta: {
             total: number;

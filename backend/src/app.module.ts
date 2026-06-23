@@ -9,6 +9,9 @@ import { CategoriesModule } from './categories/categories.module';
 import { MenuItemsModule } from './menu-items/menu-items.module'
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { UplodeModule } from './uplode/uplode.module';
+import { ViewModule } from './view/view.module';
+import { CacheModule } from '@nestjs/cache-manager';
+import KeyvRedis from '@keyv/redis';
 
 
 @Module({
@@ -19,7 +22,14 @@ import { UplodeModule } from './uplode/uplode.module';
  CategoriesModule,
  MenuItemsModule,
  CloudinaryModule,
- UplodeModule
+ UplodeModule,
+ CacheModule.register({
+      isGlobal: true, // Makes CacheManager available everywhere without re-importing
+      stores: [
+        new KeyvRedis('redis://localhost:6379'), // Connects directly to local Redis
+      ],
+    }),
+ ViewModule
   ],
   controllers: [AppController],
   providers: [AppService],

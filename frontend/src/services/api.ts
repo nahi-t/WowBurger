@@ -1,5 +1,5 @@
-// const API_BASE_URL = 'http://localhost:5001';
-const API_BASE_URL='https://wowburger.onrender.com';
+const API_BASE_URL = 'http://localhost:5001';
+// const API_BASE_URL='https://wowburger.onrender.com';
 
 export function getToken(): string | null {
   return localStorage.getItem('wow_burger_token');
@@ -189,3 +189,18 @@ export const uploadImage = async (file: File): Promise<{ url: string }> => {
 
   return await response.json(); // Returns { url: "https://res.cloudinary.com/..." }
 };
+
+// View Counter API
+export async function incrementView(id: string): Promise<{ success: boolean; views: number }> {
+  const response = await fetch(`${API_BASE_URL}/posts/${id}/view`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to increment view count.');
+  }
+
+  return response.json();
+}

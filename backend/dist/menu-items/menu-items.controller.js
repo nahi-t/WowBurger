@@ -46,6 +46,7 @@ let MenuItemsController = class MenuItemsController {
             customizableOptions: item.customizableOptions || [],
             isAvailable: item.isAvailable,
             categoryId: item.categoryId,
+            views: item.views || 0,
         }));
         return {
             data: formattedData,

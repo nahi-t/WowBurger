@@ -30,6 +30,7 @@ export interface MenuItem {
   isAvailable: boolean;
   reviewsCount?: number; 
  customizableOptions?: { name: string; options: string[] }[];
+ views?:number;
   
 }
 

@@ -1,6 +1,7 @@
-import React from 'react';
-import { X, Flame, Leaf, Shield, Award, Sparkles, ChevronLeft } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, Flame, Leaf, Shield, Award, Sparkles, ChevronLeft, Eye } from 'lucide-react'; // Added Eye icon
 import { MenuItem } from '../types';
+import { incrementView } from '../services/api'; // Import your exact backend view tracker function
 
 interface ItemDetailProps {
   item: MenuItem;
@@ -8,6 +9,21 @@ interface ItemDetailProps {
 }
 
 export default function ItemDetail({ item, onBack }: ItemDetailProps) {
+  const [views, setViews] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!item.id) return;
+
+    // Trigger the exact NestJS backend route using the item's ID
+    incrementView(item.id)
+      .then((data) => {
+        if (data.success) {
+          setViews(data.views); // Set the returned Redis counter
+        }
+      })
+      .catch((err) => console.error("Could not sync view count:", err));
+  }, [item.id]);
+
   return (
     <div className="fixed inset-0 bg-white z-50 overflow-y-auto animate-in fade-in duration-300">
       {/* Header Image */}
@@ -27,9 +43,19 @@ export default function ItemDetail({ item, onBack }: ItemDetailProps) {
 
       <main className="max-w-2xl mx-auto px-6 py-8">
         {/* Title & Price */}
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-2">
           <h1 className="text-3xl font-black text-stone-900 leading-tight">{item.name}</h1>
           <span className="text-2xl font-black text-red-600">{item.price}</span>
+        </div>
+
+        {/* View Count Badge Added Here */}
+        <div className="flex items-center gap-1.5 text-stone-400 mb-5 text-xs font-bold uppercase tracking-wider">
+          <Eye size={14} className="text-stone-400" />
+          {views !== null ? (
+            <span>{views} views</span>
+          ) : (
+            <span className="animate-pulse bg-stone-200 h-3 w-12 rounded" /> // Soft loading skeleton
+          )}
         </div>
         
         <p className="text-stone-600 text-lg leading-relaxed mb-8">{item.description}</p>
@@ -53,7 +79,6 @@ export default function ItemDetail({ item, onBack }: ItemDetailProps) {
             {item.detailedIngredients?.map((ing, idx) => (
               <div key={idx} className="flex gap-4 items-start p-3 bg-stone-50 rounded-xl">
                 <div className="p-2 bg-white rounded-lg border border-stone-200">
-                  {/* Map icon names if necessary, or use a default */}
                   <Sparkles size={16} className="text-red-500" />
                 </div>
                 <div>
