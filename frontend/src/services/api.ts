@@ -1,5 +1,5 @@
 // const API_BASE_URL = 'http://localhost:5001';
- const API_BASE_URL='https://wowburger.onrender.com';
+const API_BASE_URL = 'https://wowburger-1.onrender.com';
 
 export function getToken(): string | null {
   return localStorage.getItem('wow_burger_token');
@@ -101,7 +101,6 @@ export async function deleteCategory(id: string) {
 
 // Menu Items API
 export async function getMenuItems(page: number = 1, limit: number = 5, search: string = '') {
-  // Construct parameters safely to handle special characters and empty inputs automatically
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
@@ -170,37 +169,57 @@ export async function updateUser(userId: string, userData: any) {
   return response.json();
 }
 
-export const uploadImage = async (file: File): Promise<{ url: string }> => {
+// Image Upload
+export const uploadImages = async (files: File[]): Promise<{ urls: string[] }> => {
   const formData = new FormData();
-  formData.append('image', file); // Field key matches NestJS interceptor target
+  
+  files.forEach((file) => {
+    formData.append('images', file);
+  });
 
-  const response = await fetch(`${API_BASE_URL}/uploads/image`, {
+  const response = await fetch(`${API_BASE_URL}/uploads/images`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${getToken()}` // Pulls your admin session token out cleanly
+      'Authorization': `Bearer ${getToken()}`
     },
-    body: formData // Explicit multipart stream payload boundaries handled natively
+    body: formData
   });
 
   if (!response.ok) {
     const errorDetails = await response.json().catch(() => ({}));
-    throw new Error(errorDetails.message || 'Image transfer transaction stalled.');
+    throw new Error(errorDetails.message || 'Images transfer transaction stalled.');
   }
 
-  return await response.json(); // Returns { url: "https://res.cloudinary.com/..." }
+  return await response.json();
 };
 
 // View Counter API
 export async function incrementView(id: string): Promise<{ success: boolean; views: number }> {
-  const response = await fetch(`${API_BASE_URL}/posts/${id}/view`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/posts/${id}/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || 'Failed to increment view count.');
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      console.warn("View tracking endpoint rejected request:", err.message);
+      return { success: false, views: 0 };
+    }
+
+    const data = await response.json();
+    
+    // Normalize response objects (handles raw number returns or structured data returns)
+    if (typeof data === 'number') {
+      return { success: true, views: data };
+    }
+    return {
+      success: true,
+      views: data.views ?? data.count ?? 0
+    };
+  } catch (error) {
+    console.error("Failed to run background view aggregation pipeline:", error);
+    // Return a safe mock object so the frontend state doesn't freeze under error conditions
+    return { success: false, views: 0 };
   }
-
-  return response.json();
 }

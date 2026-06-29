@@ -29,18 +29,25 @@ let AppModule = class AppModule {
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [user_module_1.UserModule, database_module_1.DatabaseModule,
+        imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
+            user_module_1.UserModule,
+            database_module_1.DatabaseModule,
             auth_module_1.AuthModule,
             categories_module_1.CategoriesModule,
             menu_items_module_1.MenuItemsModule,
             cloudinary_module_1.CloudinaryModule,
             uplode_module_1.UplodeModule,
-            cache_manager_1.CacheModule.register({
+            cache_manager_1.CacheModule.registerAsync({
                 isGlobal: true,
-                stores: [
-                    new redis_1.default('redis://localhost:6379'),
-                ],
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: async (configService) => {
+                    const redisUrl = configService.get('REDIS_URL') || 'redis://localhost:6379';
+                    return {
+                        stores: [new redis_1.default(redisUrl)],
+                    };
+                },
             }),
             view_module_1.ViewModule
         ],

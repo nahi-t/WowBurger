@@ -90,8 +90,9 @@ async function bootstrap() {
         }
         console.log('Seeding completed successfully!');
     }
-    await app.listen(5001);
-    console.log('Backend is running on http://localhost:5001');
+    const port = process.env.PORT || 3000;
+    await app.listen(port);
+    console.log(`Backend is running on http://localhost:${port}`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

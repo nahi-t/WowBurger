@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, FileText, Check, RefreshCw, PlusCircle, MinusCircle, Upload } from 'lucide-react';
-import { uploadImage } from '../../services/api'; // Integrated image upload utility
+import { uploadImages } from '../../services/api'; // Integrated image upload utility
 import { MenuItem, MenuCategory, IngredientInfo, DietaryType } from '../../types';
 
 interface MenuItemModalProps {
@@ -164,8 +164,8 @@ export default function MenuItemModal({
 
       // If a fresh image asset file is held in state memory, push it up to Cloudinary first
       if (imageFile) {
-        const uploadResult = await uploadImage(imageFile);
-        finalImageUrl = uploadResult.url; // Overwrites variable using the cloud secure link
+        const uploadResult = await uploadImages([imageFile]);
+        finalImageUrl = uploadResult.urls[0]; // Overwrites variable using the cloud secure link
       }
 
       const ingredients = ingredientsText
