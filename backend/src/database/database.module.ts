@@ -12,33 +12,24 @@ import { ItemVariant } from '../menu-items/item-variant.entity';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (cs: ConfigService) => {
-        const isProduction = cs.get<string>('NODE_ENV') === 'production';
+      useFactory: (cs: ConfigService) => ({
+        type: 'postgres',
+        url: cs.get<string>('DATABASE_URL'),
+        autoLoadEntities: true,
         
-        return {
-          type: 'postgres',
-          // If you prefer individual variables over a single URL string:
-          host: cs.get<string>('DB_HOST') || 'postgres', 
-          port: cs.get<number>('DB_PORT') || 5432,
-          username: cs.get<string>('DB_USERNAME') || 'myuser',
-          password: cs.get<string>('DB_PASSWORD') || 'mypassword',
-          database: cs.get<string>('DB_NAME') || 'my_database',
-          
-          autoLoadEntities: true,
-          entities: [User, Category, MenuItem, ItemVariant], 
-          synchronize: true, 
-          logging: cs.get('TYPEORM_LOGGING') === 'true',
-          ssl: isProduction ? { rejectUnauthorized: false } : false,
-          
-          // 🛑 FIX: Disable SSL for local Docker development
-         
-          extra: isProduction ? {
-            ssl: {
-              rejectUnauthorized: false, 
-            },
-          } : {},
-        };
-      },
+  
+        ssl: true,
+        extra: {
+          ssl: {
+            rejectUnauthorized: false, 
+          },
+        },
+        
+        entities: [User, Category, MenuItem, ItemVariant], 
+        
+        synchronize: true, // Perfect for setting up WowBurger tables quickly!
+        logging: cs.get('TYPEORM_LOGGING') === 'true',
+      }),
     }),
   ],
   exports: [TypeOrmModule],
