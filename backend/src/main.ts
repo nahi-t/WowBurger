@@ -81,8 +81,8 @@ async function bootstrap() {
     console.log('Seeding completed successfully!');
   }
 
-const port = process.env.PORT || 3000;
-await app.listen(port);
-  console.log(`Backend is running on http://localhost:${port}`);
+const port = process.env.PORT || 5000;
+await app.listen(port, '0.0.0.0');
+console.log(`Backend is running on port ${port} and bound to 0.0.0.0`);
 }
 bootstrap();
