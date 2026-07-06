@@ -28,7 +28,12 @@ async function bootstrap() {
 // );
 
   // Enable CORS
-  app.enableCors();
+  app.enableCors({
+    origin: '*', 
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+  });
 
   const userService = app.get(UserService);
   const defaultAdminEmail = 'admin@g.com';
