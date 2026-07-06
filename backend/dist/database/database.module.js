@@ -24,20 +24,27 @@ exports.DatabaseModule = DatabaseModule = __decorate([
             typeorm_1.TypeOrmModule.forRootAsync({
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
-                useFactory: (cs) => ({
-                    type: 'postgres',
-                    url: cs.get('DATABASE_URL'),
-                    autoLoadEntities: true,
-                    ssl: true,
-                    extra: {
-                        ssl: {
-                            rejectUnauthorized: false,
-                        },
-                    },
-                    entities: [user_entity_1.User, category_entity_1.Category, menu_item_entity_1.MenuItem, item_variant_entity_1.ItemVariant],
-                    synchronize: true,
-                    logging: cs.get('TYPEORM_LOGGING') === 'true',
-                }),
+                useFactory: (cs) => {
+                    const isProduction = cs.get('NODE_ENV') === 'production';
+                    return {
+                        type: 'postgres',
+                        host: cs.get('DB_HOST') || 'postgres',
+                        port: cs.get('DB_PORT') || 5432,
+                        username: cs.get('DB_USERNAME') || 'myuser',
+                        password: cs.get('DB_PASSWORD') || 'mypassword',
+                        database: cs.get('DB_NAME') || 'my_database',
+                        autoLoadEntities: true,
+                        entities: [user_entity_1.User, category_entity_1.Category, menu_item_entity_1.MenuItem, item_variant_entity_1.ItemVariant],
+                        synchronize: true,
+                        logging: cs.get('TYPEORM_LOGGING') === 'true',
+                        ssl: isProduction ? { rejectUnauthorized: false } : false,
+                        extra: isProduction ? {
+                            ssl: {
+                                rejectUnauthorized: false,
+                            },
+                        } : {},
+                    };
+                },
             }),
         ],
         exports: [typeorm_1.TypeOrmModule],

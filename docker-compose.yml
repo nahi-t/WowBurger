@@ -1,27 +1,57 @@
 version: "3.9"
 
 services:
-  redis: # 👈 This name is your hostname
+  redis:
     image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: my_database
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d my_database"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-    container_name: backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: myuser
+      DB_PASSWORD: mypassword
+      DB_NAME: my_database
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      NODE_ENV: production
     ports:
       - "5000:5000"
-    restart: unless-stopped
-  
-    
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-    container_name: frontend
-    ports:
-      - "3001:80" # 👈 FIXED: Maps local port 3001 to container port 80
     restart: unless-stopped
-    
     depends_on:
       - backend
+    ports:
+      - "80:80"
+
+volumes:
+  pg_data:
+  redis_data:
