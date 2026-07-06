@@ -1,57 +1,25 @@
-version: "3.9"
-
 services:
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    volumes:
-      - redis_data:/data
-
-  postgres:
-    image: postgres:15-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: my_database
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myuser -d my_database"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: myuser
-      DB_PASSWORD: mypassword
-      DB_NAME: my_database
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
       NODE_ENV: production
+      PORT: 5000
     ports:
-      - "5000:5000"
+      - "5000:5000" # Exposes backend to localhost:5000
 
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
     restart: unless-stopped
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
+    ports:
+      - "80:80"     # Map to localhost:80 (or change to "8080:80" if port 80 is busy)
     depends_on:
       - backend
-    ports:
-      - "80:80"
-
-volumes:
-  pg_data:
-  redis_data:
