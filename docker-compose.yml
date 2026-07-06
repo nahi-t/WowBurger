@@ -9,8 +9,8 @@ services:
       REDIS_URL: ${REDIS_URL}
       NODE_ENV: production
       PORT: 5000
-    ports:
-      - "5000:5000" # Exposes backend to localhost:5000
+    expose:
+      - "5000" # Internal communication only
 
   frontend:
     build:
@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
     environment:
       VITE_API_URL: ${VITE_API_URL}
-    ports:
-      - "80:80"     # Map to localhost:80 (or change to "8080:80" if port 80 is busy)
+    expose:
+      - "80"   # Internal communication only
     depends_on:
       - backend
