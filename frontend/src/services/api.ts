@@ -1,7 +1,7 @@
 // const API_BASE_URL = 'http://localhost:5001';
 // const API_BASE_URL = 'https://wowburger-1.onrender.com';
 // const API_BASE_URL='http://35.159.83.79:3000'
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://35.159.83.79:5000';
 
 
 export function getToken(): string | null {
