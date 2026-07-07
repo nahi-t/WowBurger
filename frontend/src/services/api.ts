@@ -2,6 +2,7 @@
 // const API_BASE_URL = 'https://wowburger-1.onrender.com';
 // const API_BASE_URL='http://35.159.83.79:3000'
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://35.159.83.79:5000';
+import axios from 'axios';
 
 
 export function getToken(): string | null {
@@ -173,27 +174,52 @@ export async function updateUser(userId: string, userData: any) {
 }
 
 // Image Upload
-export const uploadImages = async (files: File[]): Promise<{ urls: string[] }> => {
-  const formData = new FormData();
+// export const uploadImages = async (files: File[]): Promise<{ urls: string[] }> => {
+//   const formData = new FormData();
   
-  files.forEach((file) => {
-    formData.append('images', file);
+//   files.forEach((file) => {
+//     formData.append('image', file);
+//   });
+
+//   const response = await fetch(`${API_BASE_URL}/uploads/image`, {
+//     method: 'POST',
+//     headers: {
+//       'Authorization': `Bearer ${getToken()}`
+//     },
+//     body: formData
+//   });
+
+//   if (!response.ok) {
+//     const errorDetails = await response.json().catch(() => ({}));
+//     throw new Error(errorDetails.message || 'Images transfer transaction stalled.');
+//   }
+
+//   return await response.json();
+// };
+
+
+export const uploadImages = async (files: File[]): Promise<{ urls: string[] }> => {
+  const BACKEND_URL = `${API_BASE_URL}/uploads/image`;
+
+  // Fire off API posts concurrently for each unique file image
+  const uploadPromises = files.map(async (file) => {
+    const formData = new FormData();
+    formData.append('image', file); // Matches exactly what FileInterceptor('image') expects
+
+    const response = await axios.post(BACKEND_URL, formData, {
+      headers: { 
+        'Content-Type': 'multipart/form-data' 
+      },
+    });
+    
+    // Grabs { url: result.secure_url } returned directly from your controller
+    return response.data.url; 
   });
 
-  const response = await fetch(`${API_BASE_URL}/uploads/images`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${getToken()}`
-    },
-    body: formData
-  });
-
-  if (!response.ok) {
-    const errorDetails = await response.json().catch(() => ({}));
-    throw new Error(errorDetails.message || 'Images transfer transaction stalled.');
-  }
-
-  return await response.json();
+  // Wait for all Cloudinary uploads to resolve completely
+  const urls = await Promise.all(uploadPromises);
+  
+  return { urls };
 };
 
 // View Counter API
